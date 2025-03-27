@@ -1,0 +1,40 @@
+
+import React from 'react';
+import { Calendar, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Chip from '@/components/ui/Chip';
+
+interface DashboardHeaderProps {
+  title: string;
+  description?: string;
+  timeRange?: string;
+}
+
+const DashboardHeader = ({ 
+  title, 
+  description = "Track social media mentions and analyze engagement.", 
+  timeRange = "Last 30 days"
+}: DashboardHeaderProps) => {
+  return (
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 animate-fade-in">
+      <div>
+        <Chip variant="neutral" className="mb-2">Overview</Chip>
+        <h1 className="text-3xl md:text-4xl font-semibold mb-2">{title}</h1>
+        <p className="text-muted-foreground">{description}</p>
+      </div>
+      
+      <div className="flex items-center gap-2 self-start md:self-center">
+        <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+          <Calendar size={16} />
+          <span>{timeRange}</span>
+        </Button>
+        <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+          <Filter size={16} />
+          <span>Filters</span>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardHeader;
