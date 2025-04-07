@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, Lock, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Form,
   FormControl,
@@ -26,8 +27,8 @@ const registerSchema = z.object({
     .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
     .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
   confirmPassword: z.string(),
-  terms: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the terms and conditions' })
+  terms: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions",
   })
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -38,6 +39,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Register = () => {
   const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -50,17 +52,25 @@ const Register = () => {
     },
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
-    // In a real app, this would call a registration API
-    console.log('Registration data:', data);
-    
-    // Simulate successful registration
-    toast({
-      title: "Account created!",
-      description: "Welcome to Pulse. You can now log in.",
-    });
-    
-    navigate('/login');
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      const success = await registerUser(data.name, data.email, data.password);
+      
+      if (success) {
+        toast({
+          title: "Account created!",
+          description: "Welcome to Pulse. You can now log in.",
+        });
+        
+        navigate('/login');
+      }
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: "Could not create account. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
