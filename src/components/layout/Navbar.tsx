@@ -1,14 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { BarChart3, Bell, Home, List, MessageSquare, Search, Settings, X } from 'lucide-react';
+import { BarChart3, Bell, Home, List, LogOut, MessageSquare, Search, Settings, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
   const navLinks = [
     { name: 'Dashboard', path: '/', icon: Home },
@@ -24,6 +35,11 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   
   return (
     <header className={cn(
@@ -72,6 +88,39 @@ const Navbar = () => {
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell size={20} />
           </Button>
+          
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <User size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              {user && (
+                <div className="px-2 py-1.5 text-sm">
+                  <div className="font-medium">{user.name}</div>
+                  <div className="text-muted-foreground text-xs">{user.email}</div>
+                </div>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button variant="ghost" size="icon" className="rounded-full md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <List size={20} />
           </Button>
@@ -124,6 +173,17 @@ const Navbar = () => {
                 <Settings size={22} />
                 <span>Settings</span>
               </Link>
+              
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="px-4 py-3 rounded-md flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 smooth-transition text-lg mt-2"
+              >
+                <LogOut size={22} />
+                <span>Log out</span>
+              </button>
             </nav>
           </div>
         </div>
