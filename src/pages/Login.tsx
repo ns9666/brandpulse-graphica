@@ -6,9 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Mail, Lock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Form,
   FormControl,
@@ -28,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,17 +38,25 @@ const Login = () => {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    // In a real app, this would call an authentication API
-    console.log('Login attempt:', data);
-    
-    // Simulate login success
-    toast({
-      title: "Login successful!",
-      description: "Welcome back to Pulse.",
-    });
-    
-    navigate('/');
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        toast({
+          title: "Login successful!",
+          description: "Welcome back to Pulse.",
+        });
+        
+        navigate('/');
+      }
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
