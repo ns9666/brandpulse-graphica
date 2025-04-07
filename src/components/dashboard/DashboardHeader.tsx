@@ -8,12 +8,14 @@ interface DashboardHeaderProps {
   title: string;
   description?: string;
   timeRange?: string;
+  action?: React.ReactNode;  // Added this line to support the action prop
 }
 
 const DashboardHeader = ({ 
   title, 
   description = "Track social media mentions and analyze engagement.", 
-  timeRange = "Last 30 days"
+  timeRange = "Last 30 days",
+  action  // Added this prop
 }: DashboardHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 animate-fade-in">
@@ -24,6 +26,7 @@ const DashboardHeader = ({
       </div>
       
       <div className="flex items-center gap-2 self-start md:self-center">
+        {action && <div className="mr-2">{action}</div>}
         <Button variant="outline" size="sm" className="flex items-center gap-1.5">
           <Calendar size={16} />
           <span>{timeRange}</span>
