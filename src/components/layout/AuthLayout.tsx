@@ -6,13 +6,13 @@ const AuthLayout = () => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Auth form */}
-      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center py-12">
+      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center py-12 bg-background">
         <Outlet />
       </div>
       
       {/* Right side - Branded background */}
       <div 
-        className="hidden md:flex md:w-1/2 bg-brand-blue/10 flex-col items-center justify-center p-12"
+        className="hidden md:block md:w-1/2 relative"
         style={{
           backgroundImage: 'url("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80")',
           backgroundSize: 'cover',
@@ -20,7 +20,7 @@ const AuthLayout = () => {
         }}
       >
         <div className="absolute inset-0 bg-brand-blue/30 backdrop-blur-sm" />
-        <div className="relative z-10 max-w-md text-white">
+        <div className="relative z-10 max-w-md text-white p-12 h-full flex flex-col justify-center">
           <div className="mb-6 flex items-center gap-2">
             <div className="h-12 w-12 rounded-lg bg-white flex items-center justify-center">
               <span className="text-brand-blue font-semibold text-2xl">P</span>
