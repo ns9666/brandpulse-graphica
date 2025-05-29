@@ -1,11 +1,10 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
-import Chip from '@/components/ui/Chip';
+import MentionCard from '@/components/mentions/MentionCard';
 import { Button } from '@/components/ui/button';
-import { Filter, MessageSquare, Search, SlidersHorizontal, ThumbsDown, ThumbsUp, Share } from 'lucide-react';
+import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 
 interface Mention {
   id: number;
@@ -88,21 +87,62 @@ const mentionsData: Mention[] = [
 ];
 
 const Mentions = () => {
-  const [activeFilters, setActiveFilters] = useState({
-    platforms: ['All'],
-    sentiment: ['All']
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['All']);
+  const [selectedSentiments, setSelectedSentiments] = useState<string[]>(['All']);
   
-  const getSentimentChip = (sentiment: string) => {
-    switch(sentiment) {
-      case 'positive':
-        return <Chip variant="success">Positive</Chip>;
-      case 'negative':
-        return <Chip variant="danger">Negative</Chip>;
-      default:
-        return <Chip variant="neutral">Neutral</Chip>;
+  const handlePlatformFilter = (platform: string) => {
+    if (platform === 'All') {
+      setSelectedPlatforms(['All']);
+    } else {
+      const newPlatforms = selectedPlatforms.includes('All') 
+        ? [platform]
+        : selectedPlatforms.includes(platform)
+          ? selectedPlatforms.filter(p => p !== platform)
+          : [...selectedPlatforms, platform];
+      
+      setSelectedPlatforms(newPlatforms.length === 0 ? ['All'] : newPlatforms);
     }
   };
+
+  const handleSentimentFilter = (sentiment: string) => {
+    if (sentiment === 'All') {
+      setSelectedSentiments(['All']);
+    } else {
+      const newSentiments = selectedSentiments.includes('All')
+        ? [sentiment]
+        : selectedSentiments.includes(sentiment)
+          ? selectedSentiments.filter(s => s !== sentiment)
+          : [...selectedSentiments, sentiment];
+      
+      setSelectedSentiments(newSentiments.length === 0 ? ['All'] : newSentiments);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSelectedPlatforms(['All']);
+    setSelectedSentiments(['All']);
+    setSearchQuery('');
+  };
+
+  const filteredMentions = useMemo(() => {
+    return mentionsData.filter(mention => {
+      const matchesSearch = mention.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          mention.author.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesPlatform = selectedPlatforms.includes('All') || 
+                            selectedPlatforms.includes(mention.platform);
+      
+      const matchesSentiment = selectedSentiments.includes('All') || 
+                             selectedSentiments.map(s => s.toLowerCase()).includes(mention.sentiment);
+      
+      return matchesSearch && matchesPlatform && matchesSentiment;
+    });
+  }, [searchQuery, selectedPlatforms, selectedSentiments]);
+
+  const hasActiveFilters = !selectedPlatforms.includes('All') || 
+                          !selectedSentiments.includes('All') || 
+                          searchQuery.length > 0;
   
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -116,102 +156,89 @@ const Mentions = () => {
         
         <div className="mb-6">
           <MotionCard className="p-4 md:p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search mentions..." 
-                  className="glass-input w-full rounded-lg pl-10 pr-4 py-2 focus:outline-none" 
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Search mentions..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="glass-input w-full rounded-lg pl-10 pr-4 py-2 focus:outline-none" 
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  {hasActiveFilters && (
+                    <Button variant="outline" size="sm" onClick={clearAllFilters} className="flex items-center gap-1.5">
+                      <X size={16} />
+                      Clear All
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                    <SlidersHorizontal size={16} />
+                    Advanced
+                  </Button>
+                </div>
               </div>
               
-              <div className="flex gap-2 ml-auto">
-                <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-                  <SlidersHorizontal size={16} />
-                  <span>Advanced</span>
-                </Button>
-                <Button variant="default" size="sm" className="flex items-center gap-1.5 bg-brand-blue hover:bg-brand-blue/90">
-                  <Filter size={16} />
-                  <span>Filters</span>
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm text-muted-foreground">Platform:</span>
+                  {['All', 'Twitter', 'Instagram', 'Facebook', 'Reddit', 'LinkedIn'].map((platform) => (
+                    <Button 
+                      key={platform}
+                      variant={selectedPlatforms.includes(platform) ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => handlePlatformFilter(platform)}
+                      className={selectedPlatforms.includes(platform) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
+                    >
+                      {platform}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div className="mt-4 flex flex-wrap gap-2">
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-sm text-muted-foreground">Platform:</span>
-                {['All', 'Twitter', 'Instagram', 'Facebook', 'Reddit', 'LinkedIn'].map((platform) => (
-                  <Button 
-                    key={platform}
-                    variant={activeFilters.platforms.includes(platform) ? "default" : "outline"} 
-                    size="sm" 
-                    className={activeFilters.platforms.includes(platform) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                  >
-                    {platform}
-                  </Button>
-                ))}
+              
+              <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm text-muted-foreground">Sentiment:</span>
+                  {['All', 'Positive', 'Neutral', 'Negative'].map((sentiment) => (
+                    <Button 
+                      key={sentiment}
+                      variant={selectedSentiments.includes(sentiment) ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => handleSentimentFilter(sentiment)}
+                      className={selectedSentiments.includes(sentiment) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
+                    >
+                      {sentiment}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div className="mt-2 flex flex-wrap gap-2">
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-sm text-muted-foreground">Sentiment:</span>
-                {['All', 'Positive', 'Neutral', 'Negative'].map((sentiment) => (
-                  <Button 
-                    key={sentiment}
-                    variant={activeFilters.sentiment.includes(sentiment) ? "default" : "outline"} 
-                    size="sm"
-                    className={activeFilters.sentiment.includes(sentiment) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                  >
-                    {sentiment}
-                  </Button>
-                ))}
-              </div>
+
+              {hasActiveFilters && (
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredMentions.length} of {mentionsData.length} mentions
+                </div>
+              )}
             </div>
           </MotionCard>
         </div>
         
         <div className="space-y-4">
-          {mentionsData.map((mention) => (
-            <MotionCard key={mention.id} className="p-5">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Chip variant="default">{mention.platform}</Chip>
-                    <span className="text-sm font-medium">{mention.author}</span>
-                    <span className="text-xs text-muted-foreground">{mention.date}</span>
-                  </div>
-                  
-                  <p className="text-sm md:text-base mb-4">{mention.content}</p>
-                  
-                  <div className="flex items-center gap-6 text-xs md:text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <ThumbsUp size={14} />
-                      <span>{mention.engagement.likes}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageSquare size={14} />
-                      <span>{mention.engagement.replies}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Share size={14} />
-                      <span>{mention.engagement.shares}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-row md:flex-col items-center md:items-end gap-3 mt-2 md:mt-0">
-                  {getSentimentChip(mention.sentiment)}
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">Analyze</Button>
-                    <Button variant="outline" size="sm">Respond</Button>
-                  </div>
-                </div>
-              </div>
+          {filteredMentions.length > 0 ? (
+            filteredMentions.map((mention) => (
+              <MentionCard key={mention.id} mention={mention} />
+            ))
+          ) : (
+            <MotionCard className="p-8 text-center">
+              <p className="text-muted-foreground">No mentions found matching your filters.</p>
+              <Button variant="outline" onClick={clearAllFilters} className="mt-4">
+                Clear Filters
+              </Button>
             </MotionCard>
-          ))}
+          )}
         </div>
       </main>
     </div>

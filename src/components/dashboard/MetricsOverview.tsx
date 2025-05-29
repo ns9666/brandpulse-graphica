@@ -24,21 +24,21 @@ const MetricCard = ({ title, value, change, icon: Icon }: MetricCardProps) => {
   const TrendIcon = change.trend === 'up' ? ArrowUp : change.trend === 'down' ? ArrowDown : TrendingUp;
   
   return (
-    <MotionCard className="flex flex-col h-full">
-      <div className="flex justify-between items-start">
-        <span className="text-muted-foreground text-sm font-medium">{title}</span>
-        <div className="bg-brand-blue/10 dark:bg-brand-blue/20 p-2 rounded-full text-brand-blue">
-          <Icon size={20} />
+    <MotionCard className="flex flex-col h-full p-4 sm:p-6">
+      <div className="flex justify-between items-start mb-3">
+        <span className="text-muted-foreground text-xs sm:text-sm font-medium">{title}</span>
+        <div className="bg-brand-blue/10 dark:bg-brand-blue/20 p-1.5 sm:p-2 rounded-full text-brand-blue">
+          <Icon size={16} className="sm:w-5 sm:h-5" />
         </div>
       </div>
-      <div className="mt-3">
-        <h3 className="text-3xl font-semibold tracking-tight">{value}</h3>
-        <div className="flex items-center mt-2">
+      <div className="flex-1">
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight mb-2">{value}</h3>
+        <div className="flex items-center">
           <span className={cn('text-xs font-medium rounded-full px-1.5 py-0.5 flex items-center gap-0.5', trendColor[change.trend])}>
-            <TrendIcon size={12} className="inline-block" />
+            <TrendIcon size={10} className="inline-block" />
             {change.value}
           </span>
-          <span className="text-xs text-muted-foreground ml-1.5">vs previous period</span>
+          <span className="text-xs text-muted-foreground ml-1.5">vs previous</span>
         </div>
       </div>
     </MotionCard>
@@ -74,16 +74,18 @@ const MetricsOverview = () => {
   ];
   
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      {metrics.map((metric, index) => (
-        <MetricCard
-          key={index}
-          title={metric.title}
-          value={metric.value}
-          change={metric.change}
-          icon={metric.icon}
-        />
-      ))}
+    <div className="col-span-full">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <MetricCard
+            key={index}
+            title={metric.title}
+            value={metric.value}
+            change={metric.change}
+            icon={metric.icon}
+          />
+        ))}
+      </div>
     </div>
   );
 };
