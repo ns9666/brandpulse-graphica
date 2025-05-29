@@ -1,194 +1,141 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { BarChart3, Bell, Home, List, LogOut, MessageSquare, Search, Settings, User, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { 
+  Home, 
+  MessageSquare, 
+  BarChart3, 
+  Users, 
+  Settings, 
+  LogOut, 
+  Menu, 
+  X,
+  Target,
+  Radar
+} from 'lucide-react';
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  
-  const navLinks = [
-    { name: 'Dashboard', path: '/', icon: Home },
-    { name: 'Mentions', path: '/mentions', icon: MessageSquare },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  ];
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Mentions', href: '/mentions', icon: MessageSquare },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Competitors', href: '/competitor-analysis', icon: Target },
+    { name: 'Listening', href: '/social-listening', icon: Radar },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(href);
   };
-  
+
   return (
-    <header className={cn(
-      'fixed top-0 left-0 right-0 z-50 border-b smooth-transition backdrop-blur-md',
-      isScrolled ? 'bg-white/80 dark:bg-slate-900/80 border-slate-200/50 dark:border-slate-800/50' 
-                 : 'bg-transparent border-transparent'
-    )}>
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-brand-blue flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">P</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <span className="font-medium text-xl hidden sm:inline-block">Pulse</span>
+            <span className="font-bold text-xl text-foreground">SocialPulse</span>
           </Link>
-        </div>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
-            
-            return (
-              <Link 
-                key={link.name}
-                to={link.path}
-                className={cn(
-                  'px-4 py-2 rounded-md flex items-center gap-2 smooth-transition',
-                  isActive 
-                    ? 'bg-brand-blue text-white' 
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                )}
-              >
-                <Icon size={18} />
-                <span>{link.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
-        
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Search size={20} />
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell size={20} />
-          </Button>
-          
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User size={20} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              {user && (
-                <div className="px-2 py-1.5 text-sm">
-                  <div className="font-medium">{user.name}</div>
-                  <div className="text-muted-foreground text-xs">{user.email}</div>
-                </div>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button variant="ghost" size="icon" className="rounded-full md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
-            <List size={20} />
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-brand-blue text-white'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Desktop User Menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="sm">
+              <Settings size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={logout}>
+              <LogOut size={18} />
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>
         </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 animate-fade-in">
-          <div className="container pt-4">
-            <div className="flex justify-between items-center mb-8">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-brand-blue flex items-center justify-center">
-                  <span className="text-white font-semibold text-lg">P</span>
-                </div>
-                <span className="font-medium text-xl">Pulse</span>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
-                <X size={24} />
-              </Button>
-            </div>
-            
-            <nav className="flex flex-col space-y-2">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = location.pathname === link.path;
-                
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-4 border-t border-slate-200 dark:border-slate-800">
+            <div className="space-y-1">
+              {navigation.map((item) => {
+                const Icon = item.icon;
                 return (
-                  <Link 
-                    key={link.name}
-                    to={link.path}
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      isActive(item.href)
+                        ? 'bg-brand-blue text-white'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      'px-4 py-3 rounded-md flex items-center gap-3 smooth-transition text-lg',
-                      isActive 
-                        ? 'bg-brand-blue text-white' 
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                    )}
                   >
-                    <Icon size={22} />
-                    <span>{link.name}</span>
+                    <Icon size={20} />
+                    <span>{item.name}</span>
                   </Link>
                 );
               })}
-              <Link
-                to="/settings"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-md flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 smooth-transition text-lg mt-4"
-              >
-                <Settings size={22} />
-                <span>Settings</span>
-              </Link>
-              
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="px-4 py-3 rounded-md flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 smooth-transition text-lg mt-2"
-              >
-                <LogOut size={22} />
-                <span>Log out</span>
-              </button>
-            </nav>
+              <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-left"
+                >
+                  <Settings size={18} className="mr-3" />
+                  Settings
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-left"
+                  onClick={logout}
+                >
+                  <LogOut size={18} className="mr-3" />
+                  Logout
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </header>
+        )}
+      </div>
+    </nav>
   );
 };
 

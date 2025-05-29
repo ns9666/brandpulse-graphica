@@ -1,20 +1,25 @@
 
 import React from 'react';
-import { MessageSquare, Share, ThumbsUp, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Share, ThumbsUp, ExternalLink, MoreHorizontal, Eye, Heart, Calendar } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
 import Chip from '@/components/ui/Chip';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Mention {
   id: number;
   platform: string;
   author: string;
+  authorImage?: string;
   date: string;
   content: string;
+  postImage?: string;
+  postUrl?: string;
   engagement: {
     likes: number;
     replies: number;
     shares: number;
+    views?: number;
   };
   sentiment: 'positive' | 'negative' | 'neutral';
 }
@@ -52,18 +57,35 @@ const MentionCard = ({ mention }: MentionCardProps) => {
     }
   };
 
+  const handleViewPost = () => {
+    if (mention.postUrl) {
+      window.open(mention.postUrl, '_blank');
+    }
+  };
+
   return (
-    <MotionCard className="p-5 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+    <MotionCard className="p-6 hover:shadow-lg transition-all duration-200 border border-slate-200 dark:border-slate-700">
       <div className="flex flex-col space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Chip variant="default" className={getPlatformColor(mention.platform)}>
-              {mention.platform}
-            </Chip>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span className="text-sm font-medium text-foreground">{mention.author}</span>
-              <span className="text-xs text-muted-foreground">{mention.date}</span>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={mention.authorImage} alt={mention.author} />
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                {mention.author.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Chip variant="default" className={getPlatformColor(mention.platform)}>
+                  {mention.platform}
+                </Chip>
+                <span className="text-sm font-medium text-foreground">{mention.author}</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <Calendar size={12} />
+                <span>{mention.date}</span>
+              </div>
             </div>
           </div>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -73,35 +95,58 @@ const MentionCard = ({ mention }: MentionCardProps) => {
         
         {/* Content */}
         <div className="space-y-4">
-          <p className="text-sm sm:text-base leading-relaxed text-foreground">
+          <p className="text-sm leading-relaxed text-foreground bg-slate-50 dark:bg-slate-800/30 p-4 rounded-lg border-l-4 border-brand-blue">
             {mention.content}
           </p>
           
+          {/* Post Image */}
+          {mention.postImage && (
+            <div className="relative overflow-hidden rounded-lg">
+              <img 
+                src={mention.postImage} 
+                alt="Post content" 
+                className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <Button variant="secondary" size="sm" onClick={handleViewPost}>
+                  <Eye size={16} className="mr-2" />
+                  View Image
+                </Button>
+              </div>
+            </div>
+          )}
+          
           {/* Engagement Stats */}
-          <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
-              <ThumbsUp size={14} />
-              <span>{mention.engagement.likes.toLocaleString()}</span>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-800/30 p-3 rounded-lg">
+            <div className="flex items-center gap-2 hover:text-red-500 transition-colors cursor-pointer">
+              <Heart size={16} />
+              <span className="font-medium">{mention.engagement.likes.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
-              <MessageSquare size={14} />
-              <span>{mention.engagement.replies}</span>
+            <div className="flex items-center gap-2 hover:text-blue-500 transition-colors cursor-pointer">
+              <MessageSquare size={16} />
+              <span className="font-medium">{mention.engagement.replies}</span>
             </div>
-            <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
-              <Share size={14} />
-              <span>{mention.engagement.shares}</span>
+            <div className="flex items-center gap-2 hover:text-green-500 transition-colors cursor-pointer">
+              <Share size={16} />
+              <span className="font-medium">{mention.engagement.shares}</span>
             </div>
+            {mention.engagement.views && (
+              <div className="flex items-center gap-2 hover:text-purple-500 transition-colors cursor-pointer">
+                <Eye size={16} />
+                <span className="font-medium">{mention.engagement.views.toLocaleString()}</span>
+              </div>
+            )}
           </div>
         </div>
         
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-border">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-border">
           <div className="flex items-center gap-2">
             {getSentimentChip(mention.sentiment)}
           </div>
           
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleViewPost}>
               <ExternalLink size={12} className="mr-1" />
               View Post
             </Button>

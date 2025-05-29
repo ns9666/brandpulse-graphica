@@ -41,21 +41,49 @@ const AdvancedFilters = ({
     onEngagementFilterChange('all');
   };
 
+  const setQuickDateRange = (days: number) => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+    setFromDate(from);
+    setToDate(to);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium">Advanced Filters</h3>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X size={16} />
           </Button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Quick Date Ranges */}
           <div>
-            <label className="block text-sm font-medium mb-2">Date Range</label>
+            <label className="block text-sm font-medium mb-3">Quick Date Ranges</label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" onClick={() => setQuickDateRange(7)}>
+                Last 7 days
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setQuickDateRange(30)}>
+                Last 30 days
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setQuickDateRange(90)}>
+                Last 3 months
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setQuickDateRange(365)}>
+                Last year
+              </Button>
+            </div>
+          </div>
+
+          {/* Custom Date Range */}
+          <div>
+            <label className="block text-sm font-medium mb-3">Custom Date Range</label>
             <div className="grid grid-cols-2 gap-2">
               <Popover>
                 <PopoverTrigger asChild>
@@ -64,12 +92,13 @@ const AdvancedFilters = ({
                     {fromDate ? format(fromDate, 'MMM dd, yyyy') : 'From date'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <CalendarComponent
                     mode="single"
                     selected={fromDate}
                     onSelect={setFromDate}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -81,34 +110,56 @@ const AdvancedFilters = ({
                     {toDate ? format(toDate, 'MMM dd, yyyy') : 'To date'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <CalendarComponent
                     mode="single"
                     selected={toDate}
                     onSelect={setToDate}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
+          {/* Engagement Level */}
           <div>
-            <label className="block text-sm font-medium mb-2">Engagement Level</label>
+            <label className="block text-sm font-medium mb-3">Engagement Level</label>
             <div className="grid grid-cols-2 gap-2">
-              {['all', 'high', 'medium', 'low'].map((level) => (
+              {[
+                { value: 'all', label: 'All Levels' },
+                { value: 'high', label: 'High (1000+)' },
+                { value: 'medium', label: 'Medium (100-999)' },
+                { value: 'low', label: 'Low (<100)' }
+              ].map((level) => (
                 <Button
-                  key={level}
-                  variant={engagementFilter === level ? "default" : "outline"}
+                  key={level.value}
+                  variant={engagementFilter === level.value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onEngagementFilterChange(level)}
-                  className="capitalize"
+                  onClick={() => onEngagementFilterChange(level.value)}
+                  className={engagementFilter === level.value ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
                 >
-                  {level}
+                  {level.label}
                 </Button>
               ))}
             </div>
           </div>
+
+          {/* Current Selection Display */}
+          {(fromDate || toDate || engagementFilter !== 'all') && (
+            <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Current Filters:</h4>
+              <div className="text-xs text-muted-foreground space-y-1">
+                {fromDate && toDate && (
+                  <div>Date: {format(fromDate, 'MMM dd')} - {format(toDate, 'MMM dd')}</div>
+                )}
+                {engagementFilter !== 'all' && (
+                  <div>Engagement: {engagementFilter}</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 mt-6">
