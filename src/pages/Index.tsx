@@ -1,53 +1,43 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MetricsOverview from '@/components/dashboard/MetricsOverview';
-import SentimentAnalysis from '@/components/dashboard/SentimentAnalysis';
-import PredictiveInsights from '@/components/dashboard/PredictiveInsights';
 import MentionsChart from '@/components/dashboard/MentionsChart';
-import AnalyticsChart from '@/components/dashboard/AnalyticsChart';
+import SentimentAnalysis from '@/components/dashboard/SentimentAnalysis';
 import CompetitorAnalysis from '@/components/dashboard/CompetitorAnalysis';
-import Navbar from '@/components/layout/Navbar';
+import PredictiveInsights from '@/components/dashboard/PredictiveInsights';
+import AnalyticsChart from '@/components/dashboard/AnalyticsChart';
 
 const Index = () => {
-  const navigate = useNavigate();
-  
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Navbar />
       
       <main className="container pt-28 pb-16">
         <DashboardHeader 
-          title="Dashboard" 
-          description="Monitor your social media presence and analytics"
-          action={
-            <Button onClick={() => navigate('/create-dashboard')}>
-              <Plus className="mr-2 h-4 w-4" /> Create Dashboard
-            </Button>
-          }
+          title="Brand Monitoring Dashboard" 
+          description="Real-time insights into your brand's online presence and social media performance."
         />
         
-        <div className="grid gap-6 lg:grid-cols-3 mt-6">
+        <div className="space-y-6">
+          {/* Metrics Overview */}
           <MetricsOverview />
-          <SentimentAnalysis />
-          <PredictiveInsights />
-        </div>
-        
-        <div className="mt-6">
-          <MentionsChart />
-        </div>
-
-        <div className="mt-6">
-          <AnalyticsChart />
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3 mt-6">
-          <div className="lg:col-span-2">
+          
+          {/* First Row - Charts */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MentionsChart />
+            <SentimentAnalysis />
+          </div>
+          
+          {/* Second Row - Analytics and Competitor */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <AnalyticsChart />
             <CompetitorAnalysis />
           </div>
+          
+          {/* Third Row - Predictive Insights */}
+          <PredictiveInsights />
         </div>
       </main>
     </div>

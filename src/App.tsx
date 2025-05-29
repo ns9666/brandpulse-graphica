@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import Mentions from "./pages/Mentions";
 import Analytics from "./pages/Analytics";
 import CompetitorAnalysis from "./pages/CompetitorAnalysis";
 import SocialListening from "./pages/SocialListening";
+import Dashboards from "./pages/Dashboards";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -51,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
       <Route path="/competitor-analysis" element={<ProtectedRoute><CompetitorAnalysis /></ProtectedRoute>} />
       <Route path="/social-listening" element={<ProtectedRoute><SocialListening /></ProtectedRoute>} />
+      <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
       <Route path="/create-dashboard" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
       
       {/* Catch-all route */}

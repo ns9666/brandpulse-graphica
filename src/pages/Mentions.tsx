@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -6,7 +7,7 @@ import MentionCard from '@/components/mentions/MentionCard';
 import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Filter, Search, SlidersHorizontal, X, Calendar } from 'lucide-react';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 
 interface Mention {
   id: number;
@@ -116,7 +117,7 @@ const Mentions = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['All']);
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>(['All']);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [dateRange, setDateRange] = useState('30days'); // Set default to 30 days
+  const [dateRange, setDateRange] = useState('all');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
   const [engagementFilter, setEngagementFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -155,7 +156,7 @@ const Mentions = () => {
     setSelectedPlatforms(['All']);
     setSelectedSentiments(['All']);
     setSearchQuery('');
-    setDateRange('30days');
+    setDateRange('all');
     setCustomDateRange({ from: null, to: null });
     setEngagementFilter('all');
     setCurrentPage(1);
@@ -178,6 +179,8 @@ const Mentions = () => {
   };
 
   const isDateInRange = (dateString: string) => {
+    if (dateRange === 'all') return true;
+    
     const mentionDate = new Date();
     const now = new Date();
     
@@ -240,7 +243,7 @@ const Mentions = () => {
   const hasActiveFilters = !selectedPlatforms.includes('All') || 
                           !selectedSentiments.includes('All') || 
                           searchQuery.length > 0 ||
-                          dateRange !== '30days' ||
+                          dateRange !== 'all' ||
                           customDateRange.from !== null ||
                           customDateRange.to !== null ||
                           engagementFilter !== 'all';
@@ -256,113 +259,114 @@ const Mentions = () => {
         />
         
         <div className="flex gap-6">
-          {/* Main Content */}
-          <div className={`${showAdvancedFilters ? 'w-2/3' : 'w-full'} transition-all duration-300`}>
-            {/* Search and Quick Filters */}
-            <div className="mb-6">
-              <MotionCard className="p-4 md:p-6">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-                      <input 
-                        type="text" 
-                        placeholder="Search mentions..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full rounded-lg pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-blue" 
-                      />
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      {hasActiveFilters && (
-                        <Button variant="outline" size="sm" onClick={clearAllFilters} className="flex items-center gap-1.5">
-                          <X size={16} />
-                          Clear All
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                        className={`flex items-center gap-1.5 ${showAdvancedFilters ? 'bg-brand-blue text-white' : ''}`}
-                      >
-                        <SlidersHorizontal size={16} />
-                        Filters
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Date Range Filter */}
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Date:</span>
-                      {['7days', '30days', '90days', 'all'].map((range) => (
-                        <Button 
-                          key={range}
-                          variant={dateRange === range ? "default" : "outline"} 
-                          size="sm"
-                          onClick={() => applyDateFilter(range)}
-                          className={dateRange === range ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                        >
-                          {range === '7days' ? '7D' : 
-                           range === '30days' ? '30D' : 
-                           range === '90days' ? '90D' : 'All'}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Platform filters */}
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-sm text-muted-foreground">Platform:</span>
-                      {['All', 'Twitter', 'Instagram', 'Facebook', 'Reddit', 'LinkedIn'].map((platform) => (
-                        <Button 
-                          key={platform}
-                          variant={selectedPlatforms.includes(platform) ? "default" : "outline"} 
-                          size="sm"
-                          onClick={() => handlePlatformFilter(platform)}
-                          className={selectedPlatforms.includes(platform) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                        >
-                          {platform}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Sentiment filters */}
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-sm text-muted-foreground">Sentiment:</span>
-                      {['All', 'Positive', 'Neutral', 'Negative'].map((sentiment) => (
-                        <Button 
-                          key={sentiment}
-                          variant={selectedSentiments.includes(sentiment) ? "default" : "outline"} 
-                          size="sm"
-                          onClick={() => handleSentimentFilter(sentiment)}
-                          className={selectedSentiments.includes(sentiment) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                        >
-                          {sentiment}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+          {/* Filters Sidebar */}
+          <div className="w-80 flex-shrink-0">
+            <MotionCard className="p-6 sticky top-28">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-medium">Filters</h3>
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                    <X size={14} className="mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
 
-                  {/* Results info */}
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>Showing {filteredMentions.length} of {mentionsData.length} mentions</span>
-                    {dateRange !== 'all' && (
-                      <span>
-                        Filtered: Last {dateRange === '7days' ? '7 days' : dateRange === '30days' ? '30 days' : '90 days'}
-                      </span>
-                    )}
-                  </div>
+              {/* Search */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Search mentions..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-lg pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-blue" 
+                  />
                 </div>
-              </MotionCard>
-            </div>
-            
+              </div>
+
+              {/* Date Range */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">Date Range</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'all', label: 'All Time' },
+                    { value: '7days', label: 'Last 7 days' },
+                    { value: '30days', label: 'Last 30 days' },
+                    { value: '90days', label: 'Last 90 days' }
+                  ].map((range) => (
+                    <Button
+                      key={range.value}
+                      variant={dateRange === range.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => applyDateFilter(range.value)}
+                      className={`justify-start text-xs ${dateRange === range.value ? "bg-brand-blue hover:bg-brand-blue/90" : ""}`}
+                    >
+                      {range.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Platform */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">Platform</label>
+                <div className="space-y-2">
+                  {['All', 'Twitter', 'Instagram', 'Facebook', 'Reddit', 'LinkedIn', 'YouTube'].map((platform) => (
+                    <Button
+                      key={platform}
+                      variant={selectedPlatforms.includes(platform) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePlatformFilter(platform)}
+                      className={`w-full justify-start text-xs ${selectedPlatforms.includes(platform) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}`}
+                    >
+                      {platform}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sentiment */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">Sentiment</label>
+                <div className="space-y-2">
+                  {['All', 'Positive', 'Neutral', 'Negative'].map((sentiment) => (
+                    <Button
+                      key={sentiment}
+                      variant={selectedSentiments.includes(sentiment) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSentimentFilter(sentiment)}
+                      className={`w-full justify-start text-xs ${selectedSentiments.includes(sentiment) ? "bg-brand-blue hover:bg-brand-blue/90" : ""}`}
+                    >
+                      {sentiment}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Advanced Filters Toggle */}
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <SlidersHorizontal size={16} />
+                Advanced Filters
+              </Button>
+
+              {/* Results Info */}
+              <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredMentions.length} of {mentionsData.length} mentions
+                </p>
+              </div>
+            </MotionCard>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
             {/* Mentions list */}
             <div className="space-y-4">
               {paginatedMentions.length > 0 ? (
@@ -417,20 +421,22 @@ const Mentions = () => {
             </div>
           </div>
 
-          {/* Advanced Filters Sidebar */}
+          {/* Advanced Filters Modal */}
           {showAdvancedFilters && (
-            <div className="w-1/3">
-              <AdvancedFilters
-                isOpen={true}
-                onClose={() => setShowAdvancedFilters(false)}
-                dateRange={customDateRange}
-                onDateRangeChange={(range) => {
-                  setCustomDateRange(range);
-                  setDateRange('custom');
-                }}
-                engagementFilter={engagementFilter}
-                onEngagementFilterChange={setEngagementFilter}
-              />
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="w-full max-w-md">
+                <AdvancedFilters
+                  isOpen={true}
+                  onClose={() => setShowAdvancedFilters(false)}
+                  dateRange={customDateRange}
+                  onDateRangeChange={(range) => {
+                    setCustomDateRange(range);
+                    setDateRange('custom');
+                  }}
+                  engagementFilter={engagementFilter}
+                  onEngagementFilterChange={setEngagementFilter}
+                />
+              </div>
             </div>
           )}
         </div>

@@ -33,7 +33,7 @@ const competitorData = [
 
 const CompetitorAnalysis = () => {
   return (
-    <MotionCard className="p-6">
+    <MotionCard className="p-6 h-[400px]">
       <div className="mb-6">
         <h3 className="text-lg font-medium">Competitor Analysis</h3>
         <p className="text-muted-foreground text-sm">Compare your brand performance with competitors</p>
