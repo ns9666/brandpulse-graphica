@@ -8,6 +8,8 @@ import MetricsOverview from '@/components/dashboard/MetricsOverview';
 import SentimentAnalysis from '@/components/dashboard/SentimentAnalysis';
 import PredictiveInsights from '@/components/dashboard/PredictiveInsights';
 import MentionsChart from '@/components/dashboard/MentionsChart';
+import AnalyticsChart from '@/components/dashboard/AnalyticsChart';
+import CompetitorAnalysis from '@/components/dashboard/CompetitorAnalysis';
 import Navbar from '@/components/layout/Navbar';
 
 const Index = () => {
@@ -36,6 +38,16 @@ const Index = () => {
         
         <div className="mt-6">
           <MentionsChart />
+        </div>
+
+        <div className="mt-6">
+          <AnalyticsChart />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3 mt-6">
+          <div className="lg:col-span-2">
+            <CompetitorAnalysis />
+          </div>
         </div>
       </main>
     </div>

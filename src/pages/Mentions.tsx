@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
 import MentionCard from '@/components/mentions/MentionCard';
+import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
 import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 
@@ -90,6 +92,9 @@ const Mentions = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['All']);
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>(['All']);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+  const [engagementFilter, setEngagementFilter] = useState('all');
   
   const handlePlatformFilter = (platform: string) => {
     if (platform === 'All') {
@@ -123,6 +128,32 @@ const Mentions = () => {
     setSelectedPlatforms(['All']);
     setSelectedSentiments(['All']);
     setSearchQuery('');
+    setDateRange({ from: null, to: null });
+    setEngagementFilter('all');
+  };
+
+  const getEngagementLevel = (engagement: { likes: number; replies: number; shares: number }) => {
+    const total = engagement.likes + engagement.replies + engagement.shares;
+    if (total > 1000) return 'high';
+    if (total > 100) return 'medium';
+    return 'low';
+  };
+
+  const isDateInRange = (dateString: string) => {
+    if (!dateRange.from && !dateRange.to) return true;
+    
+    const mentionDate = new Date();
+    // Simple date parsing - in real app you'd have actual dates
+    if (dateString.includes('hour')) {
+      mentionDate.setHours(mentionDate.getHours() - parseInt(dateString));
+    } else if (dateString.includes('day')) {
+      mentionDate.setDate(mentionDate.getDate() - parseInt(dateString));
+    }
+    
+    if (dateRange.from && mentionDate < dateRange.from) return false;
+    if (dateRange.to && mentionDate > dateRange.to) return false;
+    
+    return true;
   };
 
   const filteredMentions = useMemo(() => {
@@ -136,13 +167,21 @@ const Mentions = () => {
       const matchesSentiment = selectedSentiments.includes('All') || 
                              selectedSentiments.map(s => s.toLowerCase()).includes(mention.sentiment);
       
-      return matchesSearch && matchesPlatform && matchesSentiment;
+      const matchesDate = isDateInRange(mention.date);
+      
+      const matchesEngagement = engagementFilter === 'all' || 
+                              getEngagementLevel(mention.engagement) === engagementFilter;
+      
+      return matchesSearch && matchesPlatform && matchesSentiment && matchesDate && matchesEngagement;
     });
-  }, [searchQuery, selectedPlatforms, selectedSentiments]);
+  }, [searchQuery, selectedPlatforms, selectedSentiments, dateRange, engagementFilter]);
 
   const hasActiveFilters = !selectedPlatforms.includes('All') || 
                           !selectedSentiments.includes('All') || 
-                          searchQuery.length > 0;
+                          searchQuery.length > 0 ||
+                          dateRange.from !== null ||
+                          dateRange.to !== null ||
+                          engagementFilter !== 'all';
   
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -165,7 +204,7 @@ const Mentions = () => {
                     placeholder="Search mentions..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="glass-input w-full rounded-lg pl-10 pr-4 py-2 focus:outline-none" 
+                    className="w-full rounded-lg pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-blue" 
                   />
                 </div>
                 
@@ -176,7 +215,12 @@ const Mentions = () => {
                       Clear All
                     </Button>
                   )}
-                  <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowAdvancedFilters(true)}
+                    className="flex items-center gap-1.5"
+                  >
                     <SlidersHorizontal size={16} />
                     Advanced
                   </Button>
@@ -241,6 +285,15 @@ const Mentions = () => {
           )}
         </div>
       </main>
+
+      <AdvancedFilters
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        engagementFilter={engagementFilter}
+        onEngagementFilterChange={setEngagementFilter}
+      />
     </div>
   );
 };
