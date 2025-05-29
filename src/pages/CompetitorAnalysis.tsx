@@ -4,11 +4,12 @@ import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
-import { Plus, TrendingUp, TrendingDown, Users, MessageSquare, Eye, Award, Target } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Users, MessageSquare, Eye, Award, Target, Calendar, Filter } from 'lucide-react';
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 
 const competitorData = [
   {
+    id: 1,
     name: 'Competitor A',
     logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=40&h=40&fit=crop',
     mentions: 2450,
@@ -21,6 +22,7 @@ const competitorData = [
     growthRate: 8.5
   },
   {
+    id: 2,
     name: 'Competitor B',
     logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=40&h=40&fit=crop',
     mentions: 1890,
@@ -33,6 +35,7 @@ const competitorData = [
     growthRate: -2.1
   },
   {
+    id: 3,
     name: 'Your Brand',
     logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=40&h=40&fit=crop',
     mentions: 3842,
@@ -46,6 +49,7 @@ const competitorData = [
     isUser: true
   },
   {
+    id: 4,
     name: 'Competitor C',
     logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop',
     mentions: 2100,
@@ -56,6 +60,19 @@ const competitorData = [
     change: '+6.8%',
     marketShare: 16,
     growthRate: 5.3
+  },
+  {
+    id: 5,
+    name: 'Competitor D',
+    logo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop',
+    mentions: 1650,
+    sentiment: 65,
+    engagement: 3.5,
+    reach: 580000,
+    trend: 'up',
+    change: '+4.2%',
+    marketShare: 12,
+    growthRate: 3.8
   }
 ];
 
@@ -98,17 +115,32 @@ const radarData = [
 ];
 
 const CompetitorAnalysis = () => {
-  const [selectedCompetitors, setSelectedCompetitors] = useState(['Your Brand', 'Competitor A']);
-  const [timeRange, setTimeRange] = useState('3months');
+  const [selectedCompetitors, setSelectedCompetitors] = useState([3]); // Start with user's brand selected
+  const [timeRange, setTimeRange] = useState('30days');
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const toggleCompetitor = (name: string) => {
-    if (name === 'Your Brand') return; // Always keep user's brand selected
+  const toggleCompetitor = (id: number) => {
+    const competitor = competitorData.find(c => c.id === id);
+    if (competitor?.isUser) return; // Always keep user's brand selected
     
     setSelectedCompetitors(prev => 
-      prev.includes(name) 
-        ? prev.filter(c => c !== name)
-        : [...prev, name]
+      prev.includes(id) 
+        ? prev.filter(compId => compId !== id)
+        : [...prev, id]
     );
+  };
+
+  const getSelectedData = () => {
+    return competitorData.filter(c => selectedCompetitors.includes(c.id));
+  };
+
+  const handleAddCompetitor = () => {
+    setShowAddModal(true);
+  };
+
+  const applyTimeFilter = (range: string) => {
+    setTimeRange(range);
+    console.log(`Applied time filter: ${range}`);
   };
 
   return (
@@ -120,47 +152,61 @@ const CompetitorAnalysis = () => {
           title="Competitor Analysis" 
           description="Compare your brand performance with competitors across key metrics"
           action={
-            <Button>
+            <Button onClick={handleAddCompetitor} className="bg-brand-blue hover:bg-brand-blue/90">
               <Plus className="mr-2 h-4 w-4" /> Add Competitor
             </Button>
           }
         />
 
-        {/* Time Range Selector */}
+        {/* Time Range and Filters */}
         <div className="mb-6">
           <MotionCard className="p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Analysis Period</h3>
-              <div className="flex gap-2">
-                {['1month', '3months', '6months', '1year'].map((range) => (
-                  <Button
-                    key={range}
-                    variant={timeRange === range ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setTimeRange(range)}
-                    className={timeRange === range ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
-                  >
-                    {range === '1month' ? '1M' : 
-                     range === '3months' ? '3M' : 
-                     range === '6months' ? '6M' : '1Y'}
-                  </Button>
-                ))}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Time Period:</span>
+                <div className="flex gap-2">
+                  {[
+                    { value: '7days', label: '7D' },
+                    { value: '30days', label: '30D' },
+                    { value: '3months', label: '3M' },
+                    { value: '6months', label: '6M' },
+                    { value: '1year', label: '1Y' }
+                  ].map((range) => (
+                    <Button
+                      key={range.value}
+                      variant={timeRange === range.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => applyTimeFilter(range.value)}
+                      className={timeRange === range.value ? "bg-brand-blue hover:bg-brand-blue/90" : ""}
+                    >
+                      {range.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {selectedCompetitors.length} of {competitorData.length} selected
+                </span>
               </div>
             </div>
           </MotionCard>
         </div>
 
         {/* Competitor Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          {competitorData.map((competitor, index) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
+          {competitorData.map((competitor) => (
             <MotionCard
-              key={index}
-              className={`p-6 cursor-pointer border-2 transition-all ${
-                selectedCompetitors.includes(competitor.name)
-                  ? 'border-brand-blue bg-brand-blue/5'
+              key={competitor.id}
+              className={`p-4 cursor-pointer border-2 transition-all hover:shadow-lg ${
+                selectedCompetitors.includes(competitor.id)
+                  ? 'border-brand-blue bg-brand-blue/5 shadow-md'
                   : 'border-transparent hover:border-slate-300'
               } ${competitor.isUser ? 'ring-2 ring-brand-blue/30' : ''}`}
-              onClick={() => toggleCompetitor(competitor.name)}
+              onClick={() => toggleCompetitor(competitor.id)}
             >
               <div className="flex items-center gap-3 mb-4">
                 <img 
@@ -168,8 +214,8 @@ const CompetitorAnalysis = () => {
                   alt={competitor.name}
                   className="w-10 h-10 rounded-full object-cover"
                 />
-                <div>
-                  <h4 className={`font-medium ${competitor.isUser ? 'text-brand-blue' : ''}`}>
+                <div className="min-w-0">
+                  <h4 className={`font-medium truncate ${competitor.isUser ? 'text-brand-blue' : ''}`}>
                     {competitor.name}
                   </h4>
                   {competitor.isUser && (
@@ -180,18 +226,18 @@ const CompetitorAnalysis = () => {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Market Share</span>
-                  <span className="font-semibold">{competitor.marketShare}%</span>
+                  <span className="text-xs text-muted-foreground">Market Share</span>
+                  <span className="font-semibold text-sm">{competitor.marketShare}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Growth Rate</span>
+                  <span className="text-xs text-muted-foreground">Growth</span>
                   <div className="flex items-center gap-1">
                     {competitor.trend === 'up' ? (
-                      <TrendingUp size={14} className="text-emerald-600" />
+                      <TrendingUp size={12} className="text-emerald-600" />
                     ) : (
-                      <TrendingDown size={14} className="text-rose-600" />
+                      <TrendingDown size={12} className="text-rose-600" />
                     )}
-                    <span className={`text-sm font-medium ${
+                    <span className={`text-xs font-medium ${
                       competitor.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'
                     }`}>
                       {competitor.change}
@@ -199,8 +245,8 @@ const CompetitorAnalysis = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Mentions</span>
-                  <span className="font-semibold">{competitor.mentions.toLocaleString()}</span>
+                  <span className="text-xs text-muted-foreground">Mentions</span>
+                  <span className="font-semibold text-sm">{competitor.mentions.toLocaleString()}</span>
                 </div>
               </div>
             </MotionCard>
@@ -226,11 +272,11 @@ const CompetitorAnalysis = () => {
                     fillOpacity={0.1}
                     strokeWidth={2}
                   />
-                  {selectedCompetitors.filter(name => name !== 'Your Brand').map((name, index) => (
+                  {getSelectedData().filter(c => !c.isUser).slice(0, 3).map((competitor, index) => (
                     <Radar
-                      key={name}
-                      name={name}
-                      dataKey={name}
+                      key={competitor.name}
+                      name={competitor.name}
+                      dataKey={competitor.name}
                       stroke={index === 0 ? '#FF6B6B' : index === 1 ? '#4ECDC4' : '#45B7D1'}
                       fill="none"
                       strokeWidth={2}
@@ -248,7 +294,7 @@ const CompetitorAnalysis = () => {
             <h3 className="text-lg font-medium mb-4">Mentions Comparison</h3>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={competitorData.filter(c => selectedCompetitors.includes(c.name))}>
+                <BarChart data={getSelectedData()}>
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
@@ -280,12 +326,11 @@ const CompetitorAnalysis = () => {
                 </tr>
               </thead>
               <tbody>
-                {competitorData
-                  .filter(c => selectedCompetitors.includes(c.name))
+                {getSelectedData()
                   .sort((a, b) => b.mentions - a.mentions)
                   .map((competitor, index) => (
                   <tr 
-                    key={competitor.name} 
+                    key={competitor.id} 
                     className={`border-b border-slate-100 dark:border-slate-800 ${
                       competitor.isUser ? 'bg-brand-blue/5' : ''
                     }`}
@@ -348,6 +393,47 @@ const CompetitorAnalysis = () => {
             </table>
           </div>
         </MotionCard>
+
+        {/* Add Competitor Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <MotionCard className="w-full max-w-md p-6">
+              <h3 className="text-lg font-medium mb-4">Add New Competitor</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Competitor Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter competitor name..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Website URL</label>
+                  <input 
+                    type="url" 
+                    placeholder="https://competitor.com"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-6">
+                <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowAddModal(false);
+                    console.log('Adding new competitor...');
+                  }} 
+                  className="flex-1 bg-brand-blue hover:bg-brand-blue/90"
+                >
+                  Add Competitor
+                </Button>
+              </div>
+            </MotionCard>
+          </div>
+        )}
       </main>
     </div>
   );
