@@ -21,7 +21,7 @@ const Index = () => {
         />
         
         <div className="space-y-6">
-          {/* Metrics Overview */}
+          {/* Metrics Overview - Now uses Django API */}
           <MetricsOverview />
           
           {/* First Row - Charts */}

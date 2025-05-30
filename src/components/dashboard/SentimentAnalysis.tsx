@@ -2,8 +2,11 @@
 import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
+import { useApiData } from '@/hooks/useApiData';
+import { dashboardApi } from '@/services/djangoApi';
 
-const sentimentData = [
+// Default fallback data
+const defaultSentimentData = [
   { name: 'Positive', value: 65, color: '#16a34a' },
   { name: 'Neutral', value: 25, color: '#64748b' },
   { name: 'Negative', value: 10, color: '#dc2626' },
@@ -22,6 +25,20 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const SentimentAnalysis = () => {
+  // Fetch sentiment analysis data from Django API
+  const { data: apiData, loading, error } = useApiData(() => dashboardApi.getSentimentAnalysis());
+
+  // Convert API data to chart format or use fallback
+  const sentimentData = apiData ? [
+    { name: 'Positive', value: apiData.positive, color: '#16a34a' },
+    { name: 'Neutral', value: apiData.neutral, color: '#64748b' },
+    { name: 'Negative', value: apiData.negative, color: '#dc2626' },
+  ] : defaultSentimentData;
+
+  if (error) {
+    console.warn('Failed to load sentiment analysis data, using fallback data:', error);
+  }
+
   return (
     <MotionCard className="col-span-1 h-[350px]">
       <div className="flex flex-col h-full">
@@ -31,25 +48,31 @@ const SentimentAnalysis = () => {
         </div>
         
         <div className="flex-1 flex flex-col justify-center">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={sentimentData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                fill="#8884d8"
-                paddingAngle={3}
-                dataKey="value"
-              >
-                {sentimentData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
+          {loading ? (
+            <div className="h-[220px] flex items-center justify-center">
+              <div className="animate-pulse text-sm text-muted-foreground">Loading sentiment data...</div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={sentimentData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {sentimentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
           
           <div className="flex justify-center gap-6 mt-2">
             {sentimentData.map((entry, index) => (

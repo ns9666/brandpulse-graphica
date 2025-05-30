@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
@@ -8,6 +8,7 @@ import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
+import { mentionsApi } from '@/services/djangoApi';
 
 interface Mention {
   id: number;
@@ -27,92 +28,10 @@ interface Mention {
   sentiment: 'positive' | 'negative' | 'neutral';
 }
 
-const mentionsData: Mention[] = [
-  {
-    id: 1,
-    platform: 'Twitter',
-    author: '@techreporter',
-    authorImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-    date: '2 hours ago',
-    content: '"The new product from @brandname is absolutely game-changing. Best innovation I\'ve seen this year."',
-    postImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop',
-    postUrl: 'https://twitter.com/techreporter/status/123',
-    engagement: { likes: 325, replies: 42, shares: 87, views: 15400 },
-    sentiment: 'positive'
-  },
-  {
-    id: 2,
-    platform: 'Reddit',
-    author: 'u/productfan',
-    authorImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face',
-    date: '5 hours ago',
-    content: 'Has anyone else experienced issues with the latest update? The UI feels clunky compared to before.',
-    postUrl: 'https://reddit.com/r/technology/comments/abc123',
-    engagement: { likes: 128, replies: 36, shares: 12, views: 3200 },
-    sentiment: 'negative'
-  },
-  {
-    id: 3,
-    platform: 'Instagram',
-    author: '@influencer_tech',
-    authorImage: 'https://images.unsplash.com/photo-1494790108755-2616b09a4f8a?w=40&h=40&fit=crop&crop=face',
-    date: '8 hours ago',
-    content: 'Testing out the new features from @brandname - pretty impressive so far! #tech #innovation',
-    postImage: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400&h=400&fit=crop',
-    postUrl: 'https://instagram.com/p/abc123',
-    engagement: { likes: 1204, replies: 89, shares: 67, views: 25600 },
-    sentiment: 'positive'
-  },
-  {
-    id: 4,
-    platform: 'Facebook',
-    author: 'Tech Community Page',
-    authorImage: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop&crop=face',
-    date: '12 hours ago',
-    content: 'Our team has been using the new software for a week now. Performance is good but there\'s definitely room for improvement.',
-    postUrl: 'https://facebook.com/techcommunity/posts/123',
-    engagement: { likes: 78, replies: 23, shares: 5, views: 1800 },
-    sentiment: 'neutral'
-  },
-  {
-    id: 5,
-    platform: 'Twitter',
-    author: '@user438392',
-    authorImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
-    date: '1 day ago',
-    content: 'Just got my hands on @brandname\'s latest product. Not sure it\'s worth the price tag tbh. #disappointed',
-    postUrl: 'https://twitter.com/user438392/status/456',
-    engagement: { likes: 54, replies: 31, shares: 8, views: 4200 },
-    sentiment: 'negative'
-  },
-  {
-    id: 6,
-    platform: 'LinkedIn',
-    author: 'Sarah Johnson, Product Manager',
-    authorImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
-    date: '1 day ago',
-    content: 'Excited to announce our company is now partnering with @brandname to bring new innovations to our customers!',
-    postUrl: 'https://linkedin.com/in/sarahjohnson/posts/123',
-    engagement: { likes: 432, replies: 57, shares: 92, views: 8900 },
-    sentiment: 'positive'
-  },
-  {
-    id: 7,
-    platform: 'YouTube',
-    author: 'TechReviewsDaily',
-    authorImage: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=40&h=40&fit=crop&crop=face',
-    date: '2 days ago',
-    content: 'We reviewed the new product and were impressed by the quality, but the price point might be too high for casual users.',
-    postImage: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=225&fit=crop',
-    postUrl: 'https://youtube.com/watch?v=abc123',
-    engagement: { likes: 2546, replies: 342, shares: 178, views: 45600 },
-    sentiment: 'neutral'
-  }
-];
-
 const ITEMS_PER_PAGE = 5;
 
 const Mentions = () => {
+  // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['All']);
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>(['All']);
@@ -121,6 +40,60 @@ const Mentions = () => {
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
   const [engagementFilter, setEngagementFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Data states
+  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [totalMentions, setTotalMentions] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch mentions from Django API
+  const fetchMentions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Prepare API parameters
+      const params = {
+        page: currentPage,
+        pageSize: ITEMS_PER_PAGE,
+        search: searchQuery || undefined,
+        platforms: selectedPlatforms.includes('All') ? undefined : selectedPlatforms,
+        sentiments: selectedSentiments.includes('All') ? undefined : selectedSentiments.map(s => s.toLowerCase()),
+        dateRange: dateRange === 'all' ? undefined : dateRange,
+        engagementLevel: engagementFilter === 'all' ? undefined : engagementFilter,
+      };
+
+      console.log('Fetching mentions with params:', params);
+      
+      const response = await mentionsApi.getMentions(params);
+      
+      setMentions(response.results || []);
+      setTotalMentions(response.count || 0);
+    } catch (err) {
+      console.error('Failed to fetch mentions:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load mentions');
+      
+      // Fallback to empty state or show error
+      setMentions([]);
+      setTotalMentions(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch mentions when filters change
+  useEffect(() => {
+    fetchMentions();
+  }, [
+    searchQuery,
+    selectedPlatforms,
+    selectedSentiments,
+    dateRange,
+    customDateRange,
+    engagementFilter,
+    currentPage
+  ]);
   
   const handlePlatformFilter = (platform: string) => {
     if (platform === 'All') {
@@ -171,74 +144,7 @@ const Mentions = () => {
     console.log(`Applied date filter: ${range}`);
   };
 
-  const getEngagementLevel = (engagement: { likes: number; replies: number; shares: number }) => {
-    const total = engagement.likes + engagement.replies + engagement.shares;
-    if (total > 1000) return 'high';
-    if (total > 100) return 'medium';
-    return 'low';
-  };
-
-  const isDateInRange = (dateString: string) => {
-    if (dateRange === 'all') return true;
-    
-    const mentionDate = new Date();
-    const now = new Date();
-    
-    // Parse relative date strings
-    if (dateString.includes('hour')) {
-      const hours = parseInt(dateString.match(/\d+/)?.[0] || '0');
-      mentionDate.setHours(now.getHours() - hours);
-    } else if (dateString.includes('day')) {
-      const days = parseInt(dateString.match(/\d+/)?.[0] || '0');
-      mentionDate.setDate(now.getDate() - days);
-    } else {
-      mentionDate.setDate(now.getDate() - 1);
-    }
-    
-    // Apply date range filter
-    if (dateRange === 'custom' && (customDateRange.from || customDateRange.to)) {
-      if (customDateRange.from && mentionDate < customDateRange.from) return false;
-      if (customDateRange.to && mentionDate > customDateRange.to) return false;
-    } else if (dateRange !== 'all') {
-      const daysMap: { [key: string]: number } = {
-        '7days': 7,
-        '30days': 30,
-        '90days': 90
-      };
-      const maxDays = daysMap[dateRange];
-      if (maxDays) {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - maxDays);
-        if (mentionDate < cutoffDate) return false;
-      }
-    }
-    
-    return true;
-  };
-
-  const filteredMentions = useMemo(() => {
-    return mentionsData.filter(mention => {
-      const matchesSearch = mention.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          mention.author.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesPlatform = selectedPlatforms.includes('All') || 
-                            selectedPlatforms.includes(mention.platform);
-      
-      const matchesSentiment = selectedSentiments.includes('All') || 
-                             selectedSentiments.map(s => s.toLowerCase()).includes(mention.sentiment);
-      
-      const matchesDate = isDateInRange(mention.date);
-      
-      const matchesEngagement = engagementFilter === 'all' || 
-                              getEngagementLevel(mention.engagement) === engagementFilter;
-      
-      return matchesSearch && matchesPlatform && matchesSentiment && matchesDate && matchesEngagement;
-    });
-  }, [searchQuery, selectedPlatforms, selectedSentiments, dateRange, customDateRange, engagementFilter]);
-
-  const totalPages = Math.ceil(filteredMentions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedMentions = filteredMentions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalMentions / ITEMS_PER_PAGE);
 
   const hasActiveFilters = !selectedPlatforms.includes('All') || 
                           !selectedSentiments.includes('All') || 
@@ -293,9 +199,9 @@ const Mentions = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: 'all', label: 'All Time' },
-                    { value: '7days', label: 'Last 7 days' },
-                    { value: '30days', label: 'Last 30 days' },
-                    { value: '90days', label: 'Last 90 days' }
+                    { value: '7d', label: 'Last 7 days' },
+                    { value: '30d', label: 'Last 30 days' },
+                    { value: '90d', label: 'Last 90 days' }
                   ].map((range) => (
                     <Button
                       key={range.value}
@@ -359,7 +265,7 @@ const Mentions = () => {
               {/* Results Info */}
               <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Showing {filteredMentions.length} of {mentionsData.length} mentions
+                  Showing {mentions.length} of {totalMentions} mentions
                 </p>
               </div>
             </MotionCard>
@@ -367,58 +273,87 @@ const Mentions = () => {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Mentions list */}
-            <div className="space-y-4">
-              {paginatedMentions.length > 0 ? (
-                <>
-                  {paginatedMentions.map((mention) => (
-                    <MentionCard key={mention.id} mention={mention} />
-                  ))}
-                  
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center mt-8">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious 
-                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                            />
-                          </PaginationItem>
-                          
-                          {[...Array(totalPages)].map((_, i) => (
-                            <PaginationItem key={i + 1}>
-                              <PaginationLink
-                                onClick={() => setCurrentPage(i + 1)}
-                                isActive={currentPage === i + 1}
-                                className="cursor-pointer"
-                              >
-                                {i + 1}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
+            {/* API Connection Status */}
+            {error && (
+              <MotionCard className="p-4 mb-4 bg-yellow-50 border-yellow-200">
+                <p className="text-sm text-yellow-800">
+                  Django API connection failed: {error}. Showing cached data.
+                </p>
+              </MotionCard>
+            )}
+
+            {/* Loading State */}
+            {loading && (
+              <div className="space-y-4">
+                {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
+                  <MotionCard key={i} className="p-6">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                      <div className="h-16 bg-gray-200 rounded mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32"></div>
                     </div>
-                  )}
-                </>
-              ) : (
-                <MotionCard className="p-8 text-center">
-                  <p className="text-muted-foreground">No mentions found matching your filters.</p>
-                  <Button variant="outline" onClick={clearAllFilters} className="mt-4">
-                    Clear Filters
-                  </Button>
-                </MotionCard>
-              )}
-            </div>
+                  </MotionCard>
+                ))}
+              </div>
+            )}
+
+            {/* Mentions list */}
+            {!loading && (
+              <div className="space-y-4">
+                {mentions.length > 0 ? (
+                  <>
+                    {mentions.map((mention) => (
+                      <MentionCard key={mention.id} mention={mention} />
+                    ))}
+                    
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-8">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                              />
+                            </PaginationItem>
+                            
+                            {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                              const page = i + 1;
+                              return (
+                                <PaginationItem key={page}>
+                                  <PaginationLink
+                                    onClick={() => setCurrentPage(page)}
+                                    isActive={currentPage === page}
+                                    className="cursor-pointer"
+                                  >
+                                    {page}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              );
+                            })}
+                            
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <MotionCard className="p-8 text-center">
+                    <p className="text-muted-foreground">No mentions found matching your filters.</p>
+                    <Button variant="outline" onClick={clearAllFilters} className="mt-4">
+                      Clear Filters
+                    </Button>
+                  </MotionCard>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Advanced Filters Modal */}

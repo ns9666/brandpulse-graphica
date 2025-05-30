@@ -2,14 +2,17 @@
 import React from 'react';
 import { TrendingDown, TrendingUp, Users, MessageSquare } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
+import { useApiData } from '@/hooks/useApiData';
+import { competitorApi } from '@/services/djangoApi';
 
-const competitorData = [
+// Default fallback data
+const defaultCompetitorData = [
   {
     name: 'Competitor A',
     mentions: 2450,
     sentiment: 72,
     engagement: 4.8,
-    trend: 'up',
+    trend: 'up' as const,
     change: '+12.5%'
   },
   {
@@ -17,7 +20,7 @@ const competitorData = [
     mentions: 1890,
     sentiment: 68,
     engagement: 3.9,
-    trend: 'down',
+    trend: 'down' as const,
     change: '-3.2%'
   },
   {
@@ -25,13 +28,23 @@ const competitorData = [
     mentions: 3842,
     sentiment: 76,
     engagement: 5.7,
-    trend: 'up',
+    trend: 'up' as const,
     change: '+18.3%',
     isUser: true
   }
 ];
 
 const CompetitorAnalysis = () => {
+  // Fetch competitor data from Django API
+  const { data: apiData, loading, error } = useApiData(() => competitorApi.getCompetitors());
+
+  // Use API data or fallback to default data
+  const competitorData = apiData || defaultCompetitorData;
+
+  if (error) {
+    console.warn('Failed to load competitor analysis data, using fallback data:', error);
+  }
+
   return (
     <MotionCard className="p-6 h-[400px]">
       <div className="mb-6">
@@ -39,63 +52,80 @@ const CompetitorAnalysis = () => {
         <p className="text-muted-foreground text-sm">Compare your brand performance with competitors</p>
       </div>
 
-      <div className="space-y-4">
-        {competitorData.map((competitor, index) => (
-          <div
-            key={index}
-            className={`p-4 rounded-lg border ${
-              competitor.isUser 
-                ? 'bg-brand-blue/5 border-brand-blue/20' 
-                : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h4 className={`font-medium ${competitor.isUser ? 'text-brand-blue' : ''}`}>
-                  {competitor.name}
-                </h4>
-                {competitor.isUser && (
-                  <span className="px-2 py-1 bg-brand-blue text-white text-xs rounded-full">You</span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                {competitor.trend === 'up' ? (
-                  <TrendingUp size={16} className="text-emerald-600" />
-                ) : (
-                  <TrendingDown size={16} className="text-rose-600" />
-                )}
-                <span className={competitor.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}>
-                  {competitor.change}
-                </span>
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="p-4 rounded-lg border bg-slate-50 dark:bg-slate-800/30">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-8 bg-gray-200 rounded"></div>
+                  <div className="h-8 bg-gray-200 rounded"></div>
+                  <div className="h-8 bg-gray-200 rounded"></div>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {competitorData.map((competitor, index) => (
+            <div
+              key={index}
+              className={`p-4 rounded-lg border ${
+                competitor.isUser 
+                  ? 'bg-brand-blue/5 border-brand-blue/20' 
+                  : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h4 className={`font-medium ${competitor.isUser ? 'text-brand-blue' : ''}`}>
+                    {competitor.name}
+                  </h4>
+                  {competitor.isUser && (
+                    <span className="px-2 py-1 bg-brand-blue text-white text-xs rounded-full">You</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-sm">
+                  {competitor.trend === 'up' ? (
+                    <TrendingUp size={16} className="text-emerald-600" />
+                  ) : (
+                    <TrendingDown size={16} className="text-rose-600" />
+                  )}
+                  <span className={competitor.trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}>
+                    {competitor.change}
+                  </span>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <MessageSquare size={14} className="text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Mentions</span>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <MessageSquare size={14} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Mentions</span>
+                  </div>
+                  <p className="font-semibold">{competitor.mentions.toLocaleString()}</p>
                 </div>
-                <p className="font-semibold">{competitor.mentions.toLocaleString()}</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users size={14} className="text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Sentiment</span>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Users size={14} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Sentiment</span>
+                  </div>
+                  <p className="font-semibold">{competitor.sentiment}/100</p>
                 </div>
-                <p className="font-semibold">{competitor.sentiment}/100</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <TrendingUp size={14} className="text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Engagement</span>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <TrendingUp size={14} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Engagement</span>
+                  </div>
+                  <p className="font-semibold">{competitor.engagement}%</p>
                 </div>
-                <p className="font-semibold">{competitor.engagement}%</p>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </MotionCard>
   );
 };
