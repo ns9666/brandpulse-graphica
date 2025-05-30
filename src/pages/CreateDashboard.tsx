@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -68,6 +69,7 @@ const CreateDashboard = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditMode = !!editId;
+  const [isLoadingExistingData, setIsLoadingExistingData] = React.useState(false);
   
   // Default form values
   const defaultValues: Partial<FormValues> = {
@@ -127,7 +129,27 @@ const CreateDashboard = () => {
     );
   };
 
-  // Load dashboard data for editing
+  /**
+   * Load dashboard data for editing with proper API call
+   * Expected API response structure from GET /api/dashboards/{id}/:
+   * {
+   *   id: number,
+   *   name: string,
+   *   description: string,
+   *   keywords: string[],
+   *   hashtags: string[],
+   *   urls: string[],
+   *   platforms: string[],
+   *   refreshInterval: number,
+   *   sentimentAnalysis: boolean,
+   *   alertThreshold: number,
+   *   imageUrl?: string,
+   *   createdAt: string,
+   *   lastUpdated: string,
+   *   stats: { totalMentions: number, avgSentiment: number, totalReach: number, activePlatforms: number },
+   *   thumbnail: string
+   * }
+   */
   useEffect(() => {
     if (isEditMode && editId) {
       loadDashboardForEdit(parseInt(editId));
@@ -136,8 +158,13 @@ const CreateDashboard = () => {
 
   const loadDashboardForEdit = async (id: number) => {
     try {
-      console.log(`Loading dashboard ${id} for editing`);
+      setIsLoadingExistingData(true);
+      console.log(`Loading dashboard ${id} for editing via API call`);
+      
+      // Call GET /api/dashboards/{id}/
       const dashboard = await dashboardsApi.getDashboard(id);
+      
+      console.log('Loaded dashboard data for editing:', dashboard);
       
       // Populate form with existing data
       form.setValue('dashboardName', dashboard.name);
@@ -151,13 +178,37 @@ const CreateDashboard = () => {
       form.setValue('alertThreshold', dashboard.alertThreshold);
       form.setValue('imageUrl', dashboard.imageUrl || '');
       
-      toast.success('Dashboard loaded for editing');
+      toast.success('Dashboard data loaded for editing');
     } catch (error) {
       console.error('Failed to load dashboard for editing:', error);
       toast.error('Failed to load dashboard data. Using default values.');
+    } finally {
+      setIsLoadingExistingData(false);
     }
   };
 
+  /**
+   * Submit form data to create or update dashboard
+   * For CREATE: POST /api/dashboards/
+   * Expected request body:
+   * {
+   *   dashboardName: string,
+   *   description?: string,
+   *   keywords: string[],
+   *   hashtags?: string[],
+   *   urls?: string[],
+   *   refreshInterval: number,
+   *   platforms: string[],
+   *   sentimentAnalysis: boolean,
+   *   alertThreshold: number,
+   *   imageUrl?: string
+   * }
+   * 
+   * For UPDATE: PUT /api/dashboards/{id}/
+   * Same request body structure as CREATE
+   * 
+   * Expected success response: Dashboard object (see loadDashboardForEdit for structure)
+   */
   const onSubmit = async (data: FormValues) => {
     try {
       console.log('Submitting dashboard data:', data);
@@ -176,12 +227,15 @@ const CreateDashboard = () => {
       };
 
       if (isEditMode && editId) {
-        // Update existing dashboard
+        // Update existing dashboard - PUT /api/dashboards/{id}/
+        console.log(`Updating dashboard ${editId} with payload:`, payload);
         await dashboardsApi.updateDashboard(parseInt(editId), payload);
         toast.success(`Dashboard "${data.dashboardName}" updated successfully!`);
       } else {
-        // Create new dashboard
-        await dashboardsApi.createDashboard(payload);
+        // Create new dashboard - POST /api/dashboards/
+        console.log('Creating new dashboard with payload:', payload);
+        const createdDashboard = await dashboardsApi.createDashboard(payload);
+        console.log('Dashboard created successfully:', createdDashboard);
         toast.success(`Dashboard "${data.dashboardName}" created successfully!`);
       }
       
@@ -191,6 +245,18 @@ const CreateDashboard = () => {
       toast.error(isEditMode ? 'Failed to update dashboard' : 'Failed to create dashboard');
     }
   };
+
+  // Show loading state while fetching existing data for edit
+  if (isEditMode && isLoadingExistingData) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">

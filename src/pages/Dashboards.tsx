@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -62,6 +63,12 @@ const Dashboards = () => {
     );
   };
 
+  /**
+   * Delete dashboard with proper API call
+   * Expected API response: void (204 No Content)
+   * On success: Removes dashboard from list and shows success toast
+   * On error: Shows error toast and keeps dashboard in list
+   */
   const handleDeleteDashboard = async (id: number) => {
     if (deletingDashboard) return;
     
@@ -69,12 +76,17 @@ const Dashboards = () => {
       setDeletingDashboard(true);
       console.log(`Attempting to delete dashboard ${id}`);
       
-      // Try to call API
+      // Call DELETE /api/dashboards/{id}/
       await dashboardsApi.deleteDashboard(id);
       
       toast.success('Dashboard deleted successfully');
       setShowDeleteModal(null);
-      refetch(); // Refresh the dashboard list
+      
+      // Refresh the dashboard list to reflect deletion
+      await refetch();
+      
+      // Remove from selected dashboards if it was selected
+      setSelectedDashboards(prev => prev.filter(dashId => dashId !== id));
       
     } catch (error) {
       console.error('Failed to delete dashboard:', error);
@@ -84,15 +96,27 @@ const Dashboards = () => {
     }
   };
 
+  /**
+   * Open specific dashboard with proper parameter passing
+   * Navigates to main dashboard view with dashboard ID as query parameter
+   * The Index page will receive this parameter and load specific dashboard data
+   */
   const handleOpenDashboard = (id: number) => {
-    console.log(`Opening dashboard ${id}`);
+    console.log(`Opening dashboard ${id} with query parameter`);
     // Navigate to main dashboard with specific dashboard ID as query param
+    // This will be picked up by Index.tsx to load specific dashboard data
     navigate(`/?dashboard=${id}`);
   };
 
+  /**
+   * Edit dashboard with proper parameter passing
+   * Navigates to CreateDashboard page in edit mode
+   * The CreateDashboard page will load existing dashboard data via API call
+   */
   const handleEditDashboard = (id: number) => {
-    console.log(`Editing dashboard ${id}`);
+    console.log(`Editing dashboard ${id} - will trigger API call to load existing data`);
     // Navigate to create dashboard page with edit mode
+    // The edit=id parameter will trigger an API call in CreateDashboard to load existing data
     navigate(`/create-dashboard?edit=${id}`);
   };
 
