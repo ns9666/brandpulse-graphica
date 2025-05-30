@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
 import { useApiData } from '@/hooks/useApiData';
-import { dashboardApi } from '@/services/djangoApi';
+import { dashboardApi, MentionsOverTimeResponse } from '@/services/djangoApi';
 
 // Default fallback data
 const defaultMentionsData = [
@@ -41,8 +40,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const MentionsChart = () => {
   const [timeRange, setTimeRange] = useState('30d');
   
-  // Fetch mentions over time data from Django API
-  const { data: apiData, loading, error, refetch } = useApiData(
+  // Fetch mentions over time data from Django API with proper typing
+  const { data: apiData, loading, error, refetch } = useApiData<MentionsOverTimeResponse>(
     () => dashboardApi.getMentionsOverTime(timeRange),
     [timeRange]
   );

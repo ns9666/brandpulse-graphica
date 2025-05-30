@@ -33,6 +33,26 @@ export interface MentionData {
   sentiment: 'positive' | 'negative' | 'neutral';
 }
 
+// Add response wrapper types for paginated results
+export interface PaginatedResponse<T> {
+  results: T[];
+  count: number;
+  next?: string;
+  previous?: string;
+}
+
+export interface MentionsOverTimeData {
+  date: string;
+  twitter: number;
+  instagram: number;
+  facebook: number;
+  reddit: number;
+}
+
+export interface MentionsOverTimeResponse {
+  results: MentionsOverTimeData[];
+}
+
 export interface SentimentAnalysis {
   positive: number;
   neutral: number;
@@ -99,8 +119,8 @@ export const dashboardApi = {
   },
 
   // Get mentions over time data for charts
-  getMentionsOverTime: async (timeRange: string = '30d') => {
-    return apiCall(`/dashboard/mentions-overtime/?range=${timeRange}`);
+  getMentionsOverTime: async (timeRange: string = '30d'): Promise<MentionsOverTimeResponse> => {
+    return apiCall<MentionsOverTimeResponse>(`/dashboard/mentions-overtime/?range=${timeRange}`);
   },
 
   // Get sentiment analysis data
@@ -130,7 +150,7 @@ export const mentionsApi = {
     sentiments?: string[];
     dateRange?: string;
     engagementLevel?: string;
-  }) => {
+  }): Promise<PaginatedResponse<MentionData>> => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -142,7 +162,7 @@ export const mentionsApi = {
       }
     });
     
-    return apiCall(`/mentions/?${queryParams.toString()}`);
+    return apiCall<PaginatedResponse<MentionData>>(`/mentions/?${queryParams.toString()}`);
   },
 
   // Get mention details by ID

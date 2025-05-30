@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -8,25 +7,10 @@ import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
-import { mentionsApi } from '@/services/djangoApi';
+import { mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
 
-interface Mention {
-  id: number;
-  platform: string;
-  author: string;
-  authorImage?: string;
-  date: string;
-  content: string;
-  postImage?: string;
-  postUrl?: string;
-  engagement: {
-    likes: number;
-    replies: number;
-    shares: number;
-    views?: number;
-  };
-  sentiment: 'positive' | 'negative' | 'neutral';
-}
+// Use the MentionData interface from the API service
+interface Mention extends MentionData {}
 
 const ITEMS_PER_PAGE = 5;
 
@@ -41,13 +25,13 @@ const Mentions = () => {
   const [engagementFilter, setEngagementFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Data states
+  // Data states with proper typing
   const [mentions, setMentions] = useState<Mention[]>([]);
   const [totalMentions, setTotalMentions] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch mentions from Django API
+  // Fetch mentions from Django API with proper typing
   const fetchMentions = async () => {
     try {
       setLoading(true);
@@ -66,7 +50,7 @@ const Mentions = () => {
 
       console.log('Fetching mentions with params:', params);
       
-      const response = await mentionsApi.getMentions(params);
+      const response: PaginatedResponse<MentionData> = await mentionsApi.getMentions(params);
       
       setMentions(response.results || []);
       setTotalMentions(response.count || 0);
