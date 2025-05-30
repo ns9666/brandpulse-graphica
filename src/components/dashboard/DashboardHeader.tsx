@@ -3,19 +3,33 @@ import React from 'react';
 import { Calendar, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Chip from '@/components/ui/Chip';
+import DashboardFilters, { DashboardFiltersData } from './DashboardFilters';
 
 interface DashboardHeaderProps {
   title: string;
   description?: string;
   timeRange?: string;
-  action?: React.ReactNode;  // Added this line to support the action prop
+  action?: React.ReactNode;
+  onFiltersChange?: (filters: DashboardFiltersData) => void;
+  currentFilters?: DashboardFiltersData;
 }
+
+const defaultFilters: DashboardFiltersData = {
+  dateRange: '30d',
+  platforms: [],
+  sentiments: [],
+  keywords: [],
+  minEngagement: 0,
+  maxEngagement: 10000,
+};
 
 const DashboardHeader = ({ 
   title, 
   description = "Track social media mentions and analyze engagement.", 
   timeRange = "Last 30 days",
-  action  // Added this prop
+  action,
+  onFiltersChange,
+  currentFilters = defaultFilters
 }: DashboardHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 animate-fade-in">
@@ -31,10 +45,12 @@ const DashboardHeader = ({
           <Calendar size={16} />
           <span>{timeRange}</span>
         </Button>
-        <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-          <Filter size={16} />
-          <span>Filters</span>
-        </Button>
+        {onFiltersChange && (
+          <DashboardFilters 
+            onFiltersChange={onFiltersChange}
+            currentFilters={currentFilters}
+          />
+        )}
       </div>
     </div>
   );

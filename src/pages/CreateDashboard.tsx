@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -13,7 +12,8 @@ import {
   Save,
   Plus,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Upload
 } from 'lucide-react';
 
 import {
@@ -39,6 +39,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import Navbar from '@/components/layout/Navbar';
 import { dashboardsApi, CreateDashboardPayload } from '@/services/djangoApi';
 
@@ -54,7 +55,7 @@ const formSchema = z.object({
   hashtags: z.array(z.string()).optional(),
   urls: z.array(z.string().url({ message: "Please enter a valid URL" })).optional(),
   refreshInterval: z.number().min(15).max(120),
-  platforms: z.array(z.enum(["twitter", "instagram", "news", "reddit", "linkedin"])).min(1, {
+  platforms: z.array(z.enum(["twitter", "instagram", "news", "reddit", "linkedin", "all"])).min(1, {
     message: "Select at least one platform.",
   }),
   sentimentAnalysis: z.boolean().default(true),
@@ -70,6 +71,9 @@ const CreateDashboard = () => {
   const editId = searchParams.get('edit');
   const isEditMode = !!editId;
   const [isLoadingExistingData, setIsLoadingExistingData] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [uploadedImageFile, setUploadedImageFile] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string>('');
   
   // Default form values
   const defaultValues: Partial<FormValues> = {
@@ -129,25 +133,40 @@ const CreateDashboard = () => {
     );
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadedImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        form.setValue('imageUrl', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   /**
-   * Load dashboard data for editing with proper API call
-   * Expected API response structure from GET /api/dashboards/{id}/:
+   * Load dashboard data for editing
+   * Expected API response from POST /api/dashboards/get/:
    * {
-   *   id: number,
-   *   name: string,
-   *   description: string,
-   *   keywords: string[],
-   *   hashtags: string[],
-   *   urls: string[],
-   *   platforms: string[],
-   *   refreshInterval: number,
-   *   sentimentAnalysis: boolean,
-   *   alertThreshold: number,
-   *   imageUrl?: string,
-   *   createdAt: string,
-   *   lastUpdated: string,
-   *   stats: { totalMentions: number, avgSentiment: number, totalReach: number, activePlatforms: number },
-   *   thumbnail: string
+   *   success: boolean,
+   *   data: {
+   *     id: number,
+   *     name: string,
+   *     description: string,
+   *     keywords: string[],
+   *     hashtags: string[],
+   *     urls: string[],
+   *     platforms: string[],
+   *     refreshInterval: number,
+   *     sentimentAnalysis: boolean,
+   *     alertThreshold: number,
+   *     imageUrl?: string,
+   *     createdAt: string,
+   *     lastUpdated: string
+   *   }
    * }
    */
   useEffect(() => {
@@ -159,11 +178,9 @@ const CreateDashboard = () => {
   const loadDashboardForEdit = async (id: number) => {
     try {
       setIsLoadingExistingData(true);
-      console.log(`Loading dashboard ${id} for editing via API call`);
+      console.log(`Loading dashboard ${id} for editing`);
       
-      // Call GET /api/dashboards/{id}/
       const dashboard = await dashboardsApi.getDashboard(id);
-      
       console.log('Loaded dashboard data for editing:', dashboard);
       
       // Populate form with existing data
@@ -176,7 +193,11 @@ const CreateDashboard = () => {
       form.setValue('platforms', dashboard.platforms as any);
       form.setValue('sentimentAnalysis', dashboard.sentimentAnalysis);
       form.setValue('alertThreshold', dashboard.alertThreshold);
-      form.setValue('imageUrl', dashboard.imageUrl || '');
+      
+      if (dashboard.imageUrl) {
+        form.setValue('imageUrl', dashboard.imageUrl);
+        setImagePreview(dashboard.imageUrl);
+      }
       
       toast.success('Dashboard data loaded for editing');
     } catch (error) {
@@ -189,7 +210,8 @@ const CreateDashboard = () => {
 
   /**
    * Submit form data to create or update dashboard
-   * For CREATE: POST /api/dashboards/
+   * 
+   * CREATE Request: POST /api/dashboards/create/
    * Expected request body:
    * {
    *   dashboardName: string,
@@ -204,13 +226,46 @@ const CreateDashboard = () => {
    *   imageUrl?: string
    * }
    * 
-   * For UPDATE: PUT /api/dashboards/{id}/
-   * Same request body structure as CREATE
+   * UPDATE Request: POST /api/dashboards/update/
+   * Expected request body:
+   * {
+   *   dashboardId: number,
+   *   dashboardName: string,
+   *   description?: string,
+   *   keywords: string[],
+   *   hashtags?: string[],
+   *   urls?: string[],
+   *   refreshInterval: number,
+   *   platforms: string[],
+   *   sentimentAnalysis: boolean,
+   *   alertThreshold: number,
+   *   imageUrl?: string
+   * }
    * 
-   * Expected success response: Dashboard object (see loadDashboardForEdit for structure)
+   * Expected success response for both:
+   * {
+   *   success: boolean,
+   *   data: {
+   *     id: number,
+   *     name: string,
+   *     description: string,
+   *     keywords: string[],
+   *     hashtags: string[],
+   *     urls: string[],
+   *     platforms: string[],
+   *     refreshInterval: number,
+   *     sentimentAnalysis: boolean,
+   *     alertThreshold: number,
+   *     imageUrl?: string,
+   *     createdAt: string,
+   *     lastUpdated: string,
+   *     stats: { totalMentions: number, avgSentiment: number, totalReach: number, activePlatforms: number }
+   *   }
+   * }
    */
   const onSubmit = async (data: FormValues) => {
     try {
+      setIsSubmitting(true);
       console.log('Submitting dashboard data:', data);
 
       const payload: CreateDashboardPayload = {
@@ -227,12 +282,11 @@ const CreateDashboard = () => {
       };
 
       if (isEditMode && editId) {
-        // Update existing dashboard - PUT /api/dashboards/{id}/
         console.log(`Updating dashboard ${editId} with payload:`, payload);
-        await dashboardsApi.updateDashboard(parseInt(editId), payload);
+        const updatedDashboard = await dashboardsApi.updateDashboard(parseInt(editId), payload);
+        console.log('Dashboard updated successfully:', updatedDashboard);
         toast.success(`Dashboard "${data.dashboardName}" updated successfully!`);
       } else {
-        // Create new dashboard - POST /api/dashboards/
         console.log('Creating new dashboard with payload:', payload);
         const createdDashboard = await dashboardsApi.createDashboard(payload);
         console.log('Dashboard created successfully:', createdDashboard);
@@ -243,6 +297,8 @@ const CreateDashboard = () => {
     } catch (error) {
       console.error('Failed to save dashboard:', error);
       toast.error(isEditMode ? 'Failed to update dashboard' : 'Failed to create dashboard');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -322,6 +378,55 @@ const CreateDashboard = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-4">
+                  <FormLabel>Dashboard Image</FormLabel>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Upload an image from your system or enter a URL below
+                      </p>
+                    </div>
+                    {imagePreview && (
+                      <div className="h-16 w-16 rounded-lg overflow-hidden border">
+                        <img
+                          src={imagePreview}
+                          alt="Dashboard preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Or enter image URL</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://example.com/image.jpg" 
+                            {...field} 
+                            onChange={(e) => {
+                              field.onChange(e);
+                              if (e.target.value) {
+                                setImagePreview(e.target.value);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="space-y-4">
                   <FormLabel>Keywords to Track</FormLabel>
@@ -440,29 +545,56 @@ const CreateDashboard = () => {
                     <FormItem>
                       <FormLabel>Platforms to Monitor</FormLabel>
                       <FormControl>
-                        <ToggleGroup 
-                          type="multiple" 
-                          className="justify-start"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <ToggleGroupItem value="twitter" aria-label="Toggle Twitter">
-                            Twitter
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="instagram" aria-label="Toggle Instagram">
-                            Instagram
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="news" aria-label="Toggle News">
-                            News
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="reddit" aria-label="Toggle Reddit">
-                            Reddit
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="linkedin" aria-label="Toggle LinkedIn">
-                            LinkedIn
-                          </ToggleGroupItem>
-                        </ToggleGroup>
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="all-platforms"
+                              checked={field.value.includes('all')}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange(['all']);
+                                } else {
+                                  field.onChange([]);
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="all-platforms"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              All Platforms
+                            </label>
+                          </div>
+                          
+                          {!field.value.includes('all') && (
+                            <ToggleGroup 
+                              type="multiple" 
+                              className="justify-start"
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <ToggleGroupItem value="twitter" aria-label="Toggle Twitter">
+                                Twitter
+                              </ToggleGroupItem>
+                              <ToggleGroupItem value="instagram" aria-label="Toggle Instagram">
+                                Instagram
+                              </ToggleGroupItem>
+                              <ToggleGroupItem value="news" aria-label="Toggle News">
+                                News
+                              </ToggleGroupItem>
+                              <ToggleGroupItem value="reddit" aria-label="Toggle Reddit">
+                                Reddit
+                              </ToggleGroupItem>
+                              <ToggleGroupItem value="linkedin" aria-label="Toggle LinkedIn">
+                                LinkedIn
+                              </ToggleGroupItem>
+                            </ToggleGroup>
+                          )}
+                        </div>
                       </FormControl>
+                      <FormDescription>
+                        Select "All Platforms" to monitor across all available platforms, or choose specific ones.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -539,41 +671,18 @@ const CreateDashboard = () => {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dashboard Image URL (Optional)</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-2">
-                          <Input placeholder="https://example.com/image.jpg" {...field} />
-                          {field.value && (
-                            <div className="h-10 w-10 rounded overflow-hidden">
-                              <img
-                                src={field.value}
-                                alt="Dashboard thumbnail"
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = "https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?auto=format&fit=crop&w=300&q=80";
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        Add an image or logo for your dashboard
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {isEditMode ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" /> 
+                      {isEditMode ? 'Update Dashboard' : 'Create Dashboard'}
+                    </>
                   )}
-                />
-
-                <Button type="submit" className="w-full sm:w-auto">
-                  <Save className="mr-2 h-4 w-4" /> 
-                  {isEditMode ? 'Update Dashboard' : 'Create Dashboard'}
                 </Button>
               </form>
             </Form>

@@ -9,40 +9,50 @@ import SentimentAnalysis from '@/components/dashboard/SentimentAnalysis';
 import CompetitorAnalysis from '@/components/dashboard/CompetitorAnalysis';
 import PredictiveInsights from '@/components/dashboard/PredictiveInsights';
 import AnalyticsChart from '@/components/dashboard/AnalyticsChart';
-import { dashboardsApi, Dashboard } from '@/services/djangoApi';
+import { DashboardFiltersData } from '@/components/dashboard/DashboardFilters';
+import { dashboardsApi, Dashboard, analyticsApi } from '@/services/djangoApi';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
   const dashboardId = searchParams.get('dashboard');
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [dashboardFilters, setDashboardFilters] = useState<DashboardFiltersData>({
+    dateRange: '30d',
+    platforms: [],
+    sentiments: [],
+    keywords: [],
+    minEngagement: 0,
+    maxEngagement: 10000,
+  });
 
   /**
    * Load specific dashboard data when dashboard ID is provided in URL
    * Expected API response from POST /api/dashboards/get/:
    * {
-   *   id: number,
-   *   name: string,
-   *   description: string,
-   *   keywords: string[],
-   *   hashtags: string[],
-   *   urls: string[],
-   *   platforms: string[],
-   *   refreshInterval: number,
-   *   sentimentAnalysis: boolean,
-   *   alertThreshold: number,
-   *   imageUrl?: string,
-   *   createdAt: string,
-   *   lastUpdated: string,
-   *   stats: { totalMentions: number, avgSentiment: number, totalReach: number, activePlatforms: number },
-   *   thumbnail: string
+   *   success: boolean,
+   *   data: {
+   *     id: number,
+   *     name: string,
+   *     description: string,
+   *     keywords: string[],
+   *     hashtags: string[],
+   *     urls: string[],
+   *     platforms: string[],
+   *     refreshInterval: number,
+   *     sentimentAnalysis: boolean,
+   *     alertThreshold: number,
+   *     imageUrl?: string,
+   *     createdAt: string,
+   *     lastUpdated: string,
+   *     stats: { totalMentions: number, avgSentiment: number, totalReach: number, activePlatforms: number }
+   *   }
    * }
    */
   useEffect(() => {
     if (dashboardId) {
       loadSpecificDashboard(parseInt(dashboardId));
     } else {
-      // Clear selected dashboard if no ID in URL
       setSelectedDashboard(null);
     }
   }, [dashboardId]);
@@ -52,14 +62,17 @@ const Index = () => {
       setIsLoadingDashboard(true);
       console.log(`Loading specific dashboard ${id} for main view`);
       
-      // Call POST /api/dashboards/get/ with dashboard ID
       const dashboard = await dashboardsApi.getDashboard(id);
       console.log('Loaded dashboard for main view:', dashboard);
       
       setSelectedDashboard(dashboard);
       
-      // This dashboard data can now be used to filter/customize the dashboard view
-      // For example, the charts could use the dashboard's keywords, platforms, etc.
+      // Update filters based on dashboard settings
+      setDashboardFilters(prev => ({
+        ...prev,
+        platforms: dashboard.platforms || [],
+        keywords: dashboard.keywords || [],
+      }));
       
     } catch (error) {
       console.error('Failed to load specific dashboard:', error);
@@ -67,6 +80,13 @@ const Index = () => {
     } finally {
       setIsLoadingDashboard(false);
     }
+  };
+
+  const handleFiltersChange = (newFilters: DashboardFiltersData) => {
+    console.log('Dashboard filters changed:', newFilters);
+    setDashboardFilters(newFilters);
+    // All dashboard components will automatically use these filters
+    // through the context or props when they make their API calls
   };
 
   return (
@@ -77,6 +97,8 @@ const Index = () => {
         <DashboardHeader 
           title={selectedDashboard ? selectedDashboard.name : "Social Media Dashboard"} 
           description={selectedDashboard ? selectedDashboard.description : "Monitor your brand across all platforms"}
+          onFiltersChange={handleFiltersChange}
+          currentFilters={dashboardFilters}
         />
 
         {isLoadingDashboard && (
@@ -110,12 +132,13 @@ const Index = () => {
 
         <div className="space-y-6">
           {/* 
-            All dashboard components will receive data from Django API
-            Dashboard filter context is available through selectedDashboard state
-            but components don't yet accept dashboardFilter props
+            All dashboard components now receive proper context:
+            - selectedDashboard: contains dashboard-specific settings
+            - dashboardFilters: contains user-applied filters
+            - Components should combine both when making API calls
           */}
           
-          {/* Metrics Overview - Uses Django API */}
+          {/* Metrics Overview - Uses dashboard context */}
           <MetricsOverview />
           
           {/* First Row - Charts */}

@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:8000/api'; // Django backend URL
 
 // Types for API responses
@@ -114,47 +113,91 @@ const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<
 // Dashboard APIs - All converted to POST for security
 export const dashboardApi = {
   // Get main dashboard statistics
-  // Request body: { dashboardId?: number, filters?: object }
-  getStats: async (dashboardId?: number): Promise<DashboardStats> => {
+  // Request body: { dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: DashboardStats }
+  getStats: async (dashboardId?: number, filters?: any): Promise<DashboardStats> => {
+    console.log('Calling /api/dashboard/stats/ with:', { dashboardId, filters });
     return apiCall<DashboardStats>('/dashboard/stats/', {
       method: 'POST',
-      body: JSON.stringify({ dashboardId, filters: {} })
+      body: JSON.stringify({ 
+        dashboardId, 
+        filters: filters || {},
+        dateRange: filters?.dateRange || '30d',
+        platforms: filters?.platforms || [],
+        sentiments: filters?.sentiments || [],
+        keywords: filters?.keywords || [],
+        minEngagement: filters?.minEngagement || 0,
+        maxEngagement: filters?.maxEngagement || 10000
+      })
     });
   },
 
   // Get mentions over time data for charts
-  // Request body: { timeRange: string, dashboardId?: number }
-  getMentionsOverTime: async (timeRange: string = '30d', dashboardId?: number): Promise<MentionsOverTimeResponse> => {
+  // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: MentionsOverTimeData[] }
+  getMentionsOverTime: async (timeRange: string = '30d', dashboardId?: number, filters?: any): Promise<MentionsOverTimeResponse> => {
+    console.log('Calling /api/dashboard/mentions-overtime/ with:', { timeRange, dashboardId, filters });
     return apiCall<MentionsOverTimeResponse>('/dashboard/mentions-overtime/', {
       method: 'POST',
-      body: JSON.stringify({ timeRange, dashboardId })
+      body: JSON.stringify({ 
+        timeRange, 
+        dashboardId,
+        filters: filters || {},
+        platforms: filters?.platforms || [],
+        sentiments: filters?.sentiments || [],
+        keywords: filters?.keywords || []
+      })
     });
   },
 
   // Get sentiment analysis data
-  // Request body: { dashboardId?: number, filters?: object }
-  getSentimentAnalysis: async (dashboardId?: number): Promise<SentimentAnalysis> => {
+  // Request body: { dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: SentimentAnalysis }
+  getSentimentAnalysis: async (dashboardId?: number, filters?: any): Promise<SentimentAnalysis> => {
+    console.log('Calling /api/dashboard/sentiment-analysis/ with:', { dashboardId, filters });
     return apiCall<SentimentAnalysis>('/dashboard/sentiment-analysis/', {
       method: 'POST',
-      body: JSON.stringify({ dashboardId, filters: {} })
+      body: JSON.stringify({ 
+        dashboardId, 
+        filters: filters || {},
+        dateRange: filters?.dateRange || '30d',
+        platforms: filters?.platforms || [],
+        keywords: filters?.keywords || []
+      })
     });
   },
 
   // Get analytics data for performance charts
-  // Request body: { timeRange: string, dashboardId?: number }
-  getAnalyticsData: async (timeRange: string = '6m', dashboardId?: number) => {
+  // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: any }
+  getAnalyticsData: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/dashboard/analytics/ with:', { timeRange, dashboardId, filters });
     return apiCall('/dashboard/analytics/', {
       method: 'POST',
-      body: JSON.stringify({ timeRange, dashboardId })
+      body: JSON.stringify({ 
+        timeRange, 
+        dashboardId,
+        filters: filters || {},
+        platforms: filters?.platforms || [],
+        sentiments: filters?.sentiments || []
+      })
     });
   },
 
   // Get predictive insights
-  // Request body: { dashboardId?: number, analysisType?: string }
-  getPredictiveInsights: async (dashboardId?: number) => {
+  // Request body: { dashboardId?: number, analysisType?: string, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: any }
+  getPredictiveInsights: async (dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/dashboard/predictive-insights/ with:', { dashboardId, filters });
     return apiCall('/dashboard/predictive-insights/', {
       method: 'POST',
-      body: JSON.stringify({ dashboardId, analysisType: 'trend_forecasting' })
+      body: JSON.stringify({ 
+        dashboardId, 
+        analysisType: 'trend_forecasting',
+        filters: filters || {},
+        dateRange: filters?.dateRange || '30d',
+        platforms: filters?.platforms || []
+      })
     });
   },
 };
@@ -368,41 +411,74 @@ export const dashboardsApi = {
   },
 };
 
-// Analytics APIs - Converted to POST
+// Analytics APIs - Updated with proper filtering
 export const analyticsApi = {
   // Get audience reach data
-  // Request body: { timeRange: string, dashboardId?: number }
-  getAudienceReach: async (timeRange: string = '6m', dashboardId?: number) => {
+  // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: { date: string, reach: number }[] }
+  getAudienceReach: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/audience-reach/ with:', { timeRange, dashboardId, filters });
     return apiCall('/analytics/audience-reach/', {
       method: 'POST',
-      body: JSON.stringify({ timeRange, dashboardId })
+      body: JSON.stringify({ 
+        timeRange, 
+        dashboardId,
+        filters: filters || {},
+        platforms: filters?.platforms || [],
+        keywords: filters?.keywords || []
+      })
     });
   },
 
   // Get monthly mentions data
-  // Request body: { timeRange: string, dashboardId?: number }
-  getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number) => {
+  // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: { month: string, mentions: number }[] }
+  getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/monthly-mentions/ with:', { timeRange, dashboardId, filters });
     return apiCall('/analytics/monthly-mentions/', {
       method: 'POST',
-      body: JSON.stringify({ timeRange, dashboardId })
+      body: JSON.stringify({ 
+        timeRange, 
+        dashboardId,
+        filters: filters || {},
+        platforms: filters?.platforms || [],
+        sentiments: filters?.sentiments || [],
+        keywords: filters?.keywords || []
+      })
     });
   },
 
   // Get engagement metrics
-  // Request body: { timeRange: string, dashboardId?: number }
-  getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number) => {
+  // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: { date: string, engagement: number, likes: number, shares: number, comments: number }[] }
+  getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/engagement/ with:', { timeRange, dashboardId, filters });
     return apiCall('/analytics/engagement/', {
       method: 'POST',
-      body: JSON.stringify({ timeRange, dashboardId })
+      body: JSON.stringify({ 
+        timeRange, 
+        dashboardId,
+        filters: filters || {},
+        platforms: filters?.platforms || [],
+        minEngagement: filters?.minEngagement || 0,
+        maxEngagement: filters?.maxEngagement || 10000
+      })
     });
   },
 
   // Get platform performance
-  // Request body: { dashboardId?: number, timeRange?: string }
-  getPlatformPerformance: async (dashboardId?: number) => {
+  // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: { platform: string, mentions: number, engagement: number, reach: number }[] }
+  getPlatformPerformance: async (dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/platform-performance/ with:', { dashboardId, filters });
     return apiCall('/analytics/platform-performance/', {
       method: 'POST',
-      body: JSON.stringify({ dashboardId, timeRange: '30d' })
+      body: JSON.stringify({ 
+        dashboardId, 
+        timeRange: '30d',
+        filters: filters || {},
+        platforms: filters?.platforms || []
+      })
     });
   },
 };
