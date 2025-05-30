@@ -1,3 +1,4 @@
+
 const API_BASE_URL = 'http://localhost:8000/api'; // Django backend URL
 
 // Types for API responses
@@ -110,37 +111,58 @@ const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 };
 
-// Dashboard APIs
+// Dashboard APIs - All converted to POST for security
 export const dashboardApi = {
   // Get main dashboard statistics
-  getStats: async (): Promise<DashboardStats> => {
-    return apiCall<DashboardStats>('/dashboard/stats/');
+  // Request body: { dashboardId?: number, filters?: object }
+  getStats: async (dashboardId?: number): Promise<DashboardStats> => {
+    return apiCall<DashboardStats>('/dashboard/stats/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, filters: {} })
+    });
   },
 
   // Get mentions over time data for charts
-  getMentionsOverTime: async (timeRange: string = '30d'): Promise<MentionsOverTimeResponse> => {
-    return apiCall<MentionsOverTimeResponse>(`/dashboard/mentions-overtime/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getMentionsOverTime: async (timeRange: string = '30d', dashboardId?: number): Promise<MentionsOverTimeResponse> => {
+    return apiCall<MentionsOverTimeResponse>('/dashboard/mentions-overtime/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get sentiment analysis data
-  getSentimentAnalysis: async (): Promise<SentimentAnalysis> => {
-    return apiCall<SentimentAnalysis>('/dashboard/sentiment-analysis/');
+  // Request body: { dashboardId?: number, filters?: object }
+  getSentimentAnalysis: async (dashboardId?: number): Promise<SentimentAnalysis> => {
+    return apiCall<SentimentAnalysis>('/dashboard/sentiment-analysis/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, filters: {} })
+    });
   },
 
   // Get analytics data for performance charts
-  getAnalyticsData: async (timeRange: string = '6m') => {
-    return apiCall(`/dashboard/analytics/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getAnalyticsData: async (timeRange: string = '6m', dashboardId?: number) => {
+    return apiCall('/dashboard/analytics/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get predictive insights
-  getPredictiveInsights: async () => {
-    return apiCall('/dashboard/predictive-insights/');
+  // Request body: { dashboardId?: number, analysisType?: string }
+  getPredictiveInsights: async (dashboardId?: number) => {
+    return apiCall('/dashboard/predictive-insights/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, analysisType: 'trend_forecasting' })
+    });
   },
 };
 
-// Mentions APIs
+// Mentions APIs - Converted to POST
 export const mentionsApi = {
   // Get mentions with filters and pagination
+  // Request body: { page: number, pageSize: number, search?: string, platforms?: string[], sentiments?: string[], dateRange?: string, engagementLevel?: string, dashboardId?: number }
   getMentions: async (params: {
     page?: number;
     pageSize?: number;
@@ -149,162 +171,239 @@ export const mentionsApi = {
     sentiments?: string[];
     dateRange?: string;
     engagementLevel?: string;
+    dashboardId?: number;
   }): Promise<PaginatedResponse<MentionData>> => {
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(v => queryParams.append(key, v));
-        } else {
-          queryParams.append(key, value.toString());
-        }
-      }
+    return apiCall<PaginatedResponse<MentionData>>('/mentions/search/', {
+      method: 'POST',
+      body: JSON.stringify({
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        search: params.search || '',
+        platforms: params.platforms || [],
+        sentiments: params.sentiments || [],
+        dateRange: params.dateRange || '30d',
+        engagementLevel: params.engagementLevel || 'all',
+        dashboardId: params.dashboardId
+      })
     });
-    
-    return apiCall<PaginatedResponse<MentionData>>(`/mentions/?${queryParams.toString()}`);
   },
 
   // Get mention details by ID
+  // Request body: { mentionId: number }
   getMentionById: async (id: number) => {
-    return apiCall(`/mentions/${id}/`);
+    return apiCall(`/mentions/get/`, {
+      method: 'POST',
+      body: JSON.stringify({ mentionId: id })
+    });
   },
 };
 
-// Competitor Analysis APIs
+// Competitor Analysis APIs - Converted to POST
 export const competitorApi = {
   // Get competitor analysis data
-  getCompetitors: async (): Promise<CompetitorData[]> => {
-    return apiCall<CompetitorData[]>('/competitors/');
+  // Request body: { dashboardId?: number, includeUserBrand?: boolean }
+  getCompetitors: async (dashboardId?: number): Promise<CompetitorData[]> => {
+    return apiCall<CompetitorData[]>('/competitors/list/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, includeUserBrand: true })
+    });
   },
 
   // Add new competitor for tracking
-  addCompetitor: async (competitorData: { name: string; website?: string }) => {
-    return apiCall('/competitors/', {
+  // Request body: { name: string, website?: string, dashboardId?: number }
+  addCompetitor: async (competitorData: { name: string; website?: string; dashboardId?: number }) => {
+    return apiCall('/competitors/add/', {
       method: 'POST',
       body: JSON.stringify(competitorData),
     });
   },
 
   // Remove competitor
+  // Request body: { competitorId: number }
   removeCompetitor: async (competitorId: number) => {
-    return apiCall(`/competitors/${competitorId}/`, {
-      method: 'DELETE',
+    return apiCall('/competitors/remove/', {
+      method: 'POST',
+      body: JSON.stringify({ competitorId }),
     });
   },
 
   // Get competitor comparison data
+  // Request body: { competitorIds: number[], timeRange?: string, metrics?: string[] }
   getCompetitorComparison: async (competitorIds: number[]) => {
-    const params = competitorIds.map(id => `ids=${id}`).join('&');
-    return apiCall(`/competitors/compare/?${params}`);
+    return apiCall('/competitors/compare/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        competitorIds, 
+        timeRange: '30d',
+        metrics: ['mentions', 'sentiment', 'engagement', 'reach']
+      })
+    });
   },
 };
 
-// Social Listening APIs
+// Social Listening APIs - Converted to POST
 export const socialListeningApi = {
   // Get trending topics
-  getTrendingTopics: async (): Promise<TrendingTopic[]> => {
-    return apiCall<TrendingTopic[]>('/social-listening/trending-topics/');
+  // Request body: { timeRange?: string, limit?: number, dashboardId?: number }
+  getTrendingTopics: async (dashboardId?: number): Promise<TrendingTopic[]> => {
+    return apiCall<TrendingTopic[]>('/social-listening/trending-topics/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange: '24h', limit: 10, dashboardId })
+    });
   },
 
   // Get tracked keywords
-  getKeywords: async () => {
-    return apiCall('/social-listening/keywords/');
+  // Request body: { dashboardId?: number }
+  getKeywords: async (dashboardId?: number) => {
+    return apiCall('/social-listening/keywords/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId })
+    });
   },
 
   // Add new keyword for tracking
-  addKeyword: async (keywordData: { keyword: string; alertThreshold?: string }) => {
-    return apiCall('/social-listening/keywords/', {
+  // Request body: { keyword: string, alertThreshold?: string, dashboardId?: number }
+  addKeyword: async (keywordData: { keyword: string; alertThreshold?: string; dashboardId?: number }) => {
+    return apiCall('/social-listening/keywords/add/', {
       method: 'POST',
       body: JSON.stringify(keywordData),
     });
   },
 
   // Get alerts
-  getAlerts: async () => {
-    return apiCall('/social-listening/alerts/');
+  // Request body: { dashboardId?: number, status?: string }
+  getAlerts: async (dashboardId?: number) => {
+    return apiCall('/social-listening/alerts/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, status: 'active' })
+    });
   },
 
   // Create new alert
-  createAlert: async (alertData: { type: string; conditions: string }) => {
-    return apiCall('/social-listening/alerts/', {
+  // Request body: { type: string, conditions: string, dashboardId?: number }
+  createAlert: async (alertData: { type: string; conditions: string; dashboardId?: number }) => {
+    return apiCall('/social-listening/alerts/create/', {
       method: 'POST',
       body: JSON.stringify(alertData),
     });
   },
 
   // Get real-time mentions data
-  getRealTimeMentions: async (timeRange: string = '24h') => {
-    return apiCall(`/social-listening/realtime-mentions/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getRealTimeMentions: async (timeRange: string = '24h', dashboardId?: number) => {
+    return apiCall('/social-listening/realtime-mentions/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get sentiment trend data
-  getSentimentTrend: async (timeRange: string = '24h') => {
-    return apiCall(`/social-listening/sentiment-trend/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getSentimentTrend: async (timeRange: string = '24h', dashboardId?: number) => {
+    return apiCall('/social-listening/sentiment-trend/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 };
 
-// Dashboards Management APIs
+// Dashboards Management APIs - Converted to POST
 export const dashboardsApi = {
   // Get all user dashboards
+  // Request body: { userId?: string, includeStats?: boolean }
   getDashboards: async (): Promise<Dashboard[]> => {
-    return apiCall<Dashboard[]>('/dashboards/');
+    return apiCall<Dashboard[]>('/dashboards/list/', {
+      method: 'POST',
+      body: JSON.stringify({ includeStats: true })
+    });
   },
 
   // Get single dashboard by ID
+  // Request body: { dashboardId: number, includeStats?: boolean }
   getDashboard: async (id: number): Promise<Dashboard> => {
-    return apiCall<Dashboard>(`/dashboards/${id}/`);
+    return apiCall<Dashboard>('/dashboards/get/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId: id, includeStats: true })
+    });
   },
 
   // Create new dashboard
+  // Request body: CreateDashboardPayload
   createDashboard: async (dashboardData: CreateDashboardPayload): Promise<Dashboard> => {
-    return apiCall<Dashboard>('/dashboards/', {
+    return apiCall<Dashboard>('/dashboards/create/', {
       method: 'POST',
       body: JSON.stringify(dashboardData),
     });
   },
 
   // Update dashboard
+  // Request body: { dashboardId: number, ...UpdateData }
   updateDashboard: async (id: number, dashboardData: Partial<CreateDashboardPayload>): Promise<Dashboard> => {
-    return apiCall<Dashboard>(`/dashboards/${id}/`, {
-      method: 'PUT',
-      body: JSON.stringify(dashboardData),
+    return apiCall<Dashboard>('/dashboards/update/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId: id, ...dashboardData }),
     });
   },
 
   // Delete dashboard
+  // Request body: { dashboardId: number }
   deleteDashboard: async (id: number): Promise<void> => {
-    return apiCall<void>(`/dashboards/${id}/`, {
-      method: 'DELETE',
+    return apiCall<void>('/dashboards/delete/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId: id }),
     });
   },
 
   // Get dashboard comparison data
+  // Request body: { dashboardIds: number[], timeRange?: string, metrics?: string[] }
   compareDashboards: async (dashboardIds: number[]) => {
-    const params = dashboardIds.map(id => `ids=${id}`).join('&');
-    return apiCall(`/dashboards/compare/?${params}`);
+    return apiCall('/dashboards/compare/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        dashboardIds, 
+        timeRange: '30d',
+        metrics: ['mentions', 'sentiment', 'engagement', 'reach']
+      })
+    });
   },
 };
 
-// Analytics APIs
+// Analytics APIs - Converted to POST
 export const analyticsApi = {
   // Get audience reach data
-  getAudienceReach: async (timeRange: string = '6m') => {
-    return apiCall(`/analytics/audience-reach/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getAudienceReach: async (timeRange: string = '6m', dashboardId?: number) => {
+    return apiCall('/analytics/audience-reach/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get monthly mentions data
-  getMonthlyMentions: async (timeRange: string = '6m') => {
-    return apiCall(`/analytics/monthly-mentions/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number) => {
+    return apiCall('/analytics/monthly-mentions/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get engagement metrics
-  getEngagementMetrics: async (timeRange: string = '6m') => {
-    return apiCall(`/analytics/engagement/?range=${timeRange}`);
+  // Request body: { timeRange: string, dashboardId?: number }
+  getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number) => {
+    return apiCall('/analytics/engagement/', {
+      method: 'POST',
+      body: JSON.stringify({ timeRange, dashboardId })
+    });
   },
 
   // Get platform performance
-  getPlatformPerformance: async () => {
-    return apiCall('/analytics/platform-performance/');
+  // Request body: { dashboardId?: number, timeRange?: string }
+  getPlatformPerformance: async (dashboardId?: number) => {
+    return apiCall('/analytics/platform-performance/', {
+      method: 'POST',
+      body: JSON.stringify({ dashboardId, timeRange: '30d' })
+    });
   },
 };
 

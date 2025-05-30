@@ -19,7 +19,7 @@ const Index = () => {
 
   /**
    * Load specific dashboard data when dashboard ID is provided in URL
-   * Expected API response from GET /api/dashboards/{id}/:
+   * Expected API response from POST /api/dashboards/get/:
    * {
    *   id: number,
    *   name: string,
@@ -52,7 +52,7 @@ const Index = () => {
       setIsLoadingDashboard(true);
       console.log(`Loading specific dashboard ${id} for main view`);
       
-      // Call GET /api/dashboards/{id}/
+      // Call POST /api/dashboards/get/ with dashboard ID
       const dashboard = await dashboardsApi.getDashboard(id);
       console.log('Loaded dashboard for main view:', dashboard);
       
@@ -111,27 +111,27 @@ const Index = () => {
         <div className="space-y-6">
           {/* 
             All dashboard components will receive data from Django API
-            They can optionally use the selectedDashboard data to filter results
-            based on the specific dashboard's keywords, platforms, etc.
+            Dashboard filter context is available through selectedDashboard state
+            but components don't yet accept dashboardFilter props
           */}
           
           {/* Metrics Overview - Uses Django API */}
-          <MetricsOverview dashboardFilter={selectedDashboard} />
+          <MetricsOverview />
           
           {/* First Row - Charts */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <MentionsChart dashboardFilter={selectedDashboard} />
-            <SentimentAnalysis dashboardFilter={selectedDashboard} />
+            <MentionsChart />
+            <SentimentAnalysis />
           </div>
           
           {/* Second Row - Analytics and Competitor */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <AnalyticsChart dashboardFilter={selectedDashboard} />
-            <CompetitorAnalysis dashboardFilter={selectedDashboard} />
+            <AnalyticsChart />
+            <CompetitorAnalysis />
           </div>
           
           {/* Third Row - Predictive Insights */}
-          <PredictiveInsights dashboardFilter={selectedDashboard} />
+          <PredictiveInsights />
         </div>
       </main>
     </div>
