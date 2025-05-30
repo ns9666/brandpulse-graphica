@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:8000/api'; // Django backend URL
 
 // Types for API responses
@@ -247,29 +246,34 @@ export const socialListeningApi = {
 // Dashboards Management APIs
 export const dashboardsApi = {
   // Get all user dashboards
-  getDashboards: async () => {
-    return apiCall('/dashboards/');
+  getDashboards: async (): Promise<Dashboard[]> => {
+    return apiCall<Dashboard[]>('/dashboards/');
+  },
+
+  // Get single dashboard by ID
+  getDashboard: async (id: number): Promise<Dashboard> => {
+    return apiCall<Dashboard>(`/dashboards/${id}/`);
   },
 
   // Create new dashboard
-  createDashboard: async (dashboardData: { name: string; description?: string; widgets: any[] }) => {
-    return apiCall('/dashboards/', {
+  createDashboard: async (dashboardData: CreateDashboardPayload): Promise<Dashboard> => {
+    return apiCall<Dashboard>('/dashboards/', {
       method: 'POST',
       body: JSON.stringify(dashboardData),
     });
   },
 
   // Update dashboard
-  updateDashboard: async (id: number, dashboardData: any) => {
-    return apiCall(`/dashboards/${id}/`, {
+  updateDashboard: async (id: number, dashboardData: Partial<CreateDashboardPayload>): Promise<Dashboard> => {
+    return apiCall<Dashboard>(`/dashboards/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(dashboardData),
     });
   },
 
   // Delete dashboard
-  deleteDashboard: async (id: number) => {
-    return apiCall(`/dashboards/${id}/`, {
+  deleteDashboard: async (id: number): Promise<void> => {
+    return apiCall<void>(`/dashboards/${id}/`, {
       method: 'DELETE',
     });
   },
@@ -303,6 +307,43 @@ export const analyticsApi = {
     return apiCall('/analytics/platform-performance/');
   },
 };
+
+// Add new types for dashboard management
+export interface Dashboard {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: string;
+  lastUpdated: string;
+  stats: {
+    totalMentions: number;
+    avgSentiment: number;
+    totalReach: number;
+    activePlatforms: number;
+  };
+  thumbnail: string;
+  keywords: string[];
+  hashtags: string[];
+  urls: string[];
+  platforms: string[];
+  refreshInterval: number;
+  sentimentAnalysis: boolean;
+  alertThreshold: number;
+  imageUrl?: string;
+}
+
+export interface CreateDashboardPayload {
+  dashboardName: string;
+  description?: string;
+  keywords: string[];
+  hashtags?: string[];
+  urls?: string[];
+  refreshInterval: number;
+  platforms: string[];
+  sentimentAnalysis: boolean;
+  alertThreshold: number;
+  imageUrl?: string;
+}
 
 export default {
   dashboard: dashboardApi,

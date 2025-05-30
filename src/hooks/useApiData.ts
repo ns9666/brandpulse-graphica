@@ -20,11 +20,17 @@ export function useApiData<T>(
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching data from API...');
       const result = await apiCall();
+      console.log('API data received:', result);
       setData(result);
     } catch (err) {
       console.error('API fetch error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      
+      // Don't show error toast for every failed request, just log it
+      console.warn('API call failed, component should handle gracefully:', errorMessage);
     } finally {
       setLoading(false);
     }

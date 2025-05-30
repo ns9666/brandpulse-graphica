@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,6 +39,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import Navbar from '@/components/layout/Navbar';
+import { dashboardsApi, CreateDashboardPayload } from '@/services/djangoApi';
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -64,6 +65,9 @@ type FormValues = z.infer<typeof formSchema>;
 
 const CreateDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditMode = !!editId;
   
   // Default form values
   const defaultValues: Partial<FormValues> = {
@@ -123,10 +127,69 @@ const CreateDashboard = () => {
     );
   };
 
-  const onSubmit = (data: FormValues) => {
-    toast.success(`Dashboard "${data.dashboardName}" created successfully!`);
-    console.log("Dashboard data:", data);
-    navigate('/');
+  // Load dashboard data for editing
+  useEffect(() => {
+    if (isEditMode && editId) {
+      loadDashboardForEdit(parseInt(editId));
+    }
+  }, [isEditMode, editId]);
+
+  const loadDashboardForEdit = async (id: number) => {
+    try {
+      console.log(`Loading dashboard ${id} for editing`);
+      const dashboard = await dashboardsApi.getDashboard(id);
+      
+      // Populate form with existing data
+      form.setValue('dashboardName', dashboard.name);
+      form.setValue('description', dashboard.description || '');
+      form.setValue('keywords', dashboard.keywords || []);
+      form.setValue('hashtags', dashboard.hashtags || []);
+      form.setValue('urls', dashboard.urls || []);
+      form.setValue('refreshInterval', dashboard.refreshInterval);
+      form.setValue('platforms', dashboard.platforms as any);
+      form.setValue('sentimentAnalysis', dashboard.sentimentAnalysis);
+      form.setValue('alertThreshold', dashboard.alertThreshold);
+      form.setValue('imageUrl', dashboard.imageUrl || '');
+      
+      toast.success('Dashboard loaded for editing');
+    } catch (error) {
+      console.error('Failed to load dashboard for editing:', error);
+      toast.error('Failed to load dashboard data. Using default values.');
+    }
+  };
+
+  const onSubmit = async (data: FormValues) => {
+    try {
+      console.log('Submitting dashboard data:', data);
+
+      const payload: CreateDashboardPayload = {
+        dashboardName: data.dashboardName,
+        description: data.description,
+        keywords: data.keywords,
+        hashtags: data.hashtags,
+        urls: data.urls,
+        refreshInterval: data.refreshInterval,
+        platforms: data.platforms,
+        sentimentAnalysis: data.sentimentAnalysis,
+        alertThreshold: data.alertThreshold,
+        imageUrl: data.imageUrl,
+      };
+
+      if (isEditMode && editId) {
+        // Update existing dashboard
+        await dashboardsApi.updateDashboard(parseInt(editId), payload);
+        toast.success(`Dashboard "${data.dashboardName}" updated successfully!`);
+      } else {
+        // Create new dashboard
+        await dashboardsApi.createDashboard(payload);
+        toast.success(`Dashboard "${data.dashboardName}" created successfully!`);
+      }
+      
+      navigate('/dashboards');
+    } catch (error) {
+      console.error('Failed to save dashboard:', error);
+      toast.error(isEditMode ? 'Failed to update dashboard' : 'Failed to create dashboard');
+    }
   };
 
   return (
@@ -137,19 +200,24 @@ const CreateDashboard = () => {
         <div className="mb-6">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboards')}
             className="flex items-center gap-2 mb-4"
           >
             <ArrowLeft size={16} />
-            Back to Dashboard
+            Back to Dashboards
           </Button>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl">Create Monitoring Dashboard</CardTitle>
+            <CardTitle className="text-2xl">
+              {isEditMode ? 'Edit Monitoring Dashboard' : 'Create Monitoring Dashboard'}
+            </CardTitle>
             <CardDescription>
-              Set up your social media monitoring dashboard by providing keywords, hashtags, and more.
+              {isEditMode 
+                ? 'Update your social media monitoring dashboard settings.'
+                : 'Set up your social media monitoring dashboard by providing keywords, hashtags, and more.'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -438,7 +506,8 @@ const CreateDashboard = () => {
                 />
 
                 <Button type="submit" className="w-full sm:w-auto">
-                  <Save className="mr-2 h-4 w-4" /> Create Dashboard
+                  <Save className="mr-2 h-4 w-4" /> 
+                  {isEditMode ? 'Update Dashboard' : 'Create Dashboard'}
                 </Button>
               </form>
             </Form>
