@@ -6,7 +6,14 @@ import { useApiData } from '@/hooks/useApiData';
 import { analyticsApi } from '@/services/djangoApi';
 import { useDashboardContext } from '@/pages/Index';
 
-const defaultKeywordsData = [
+interface KeywordData {
+  keyword: string;
+  mentions: number;
+  change: string;
+  trend: 'up' | 'down';
+}
+
+const defaultKeywordsData: KeywordData[] = [
   { keyword: 'brand awareness', mentions: 1247, change: '+12.5%', trend: 'up' },
   { keyword: 'customer service', mentions: 892, change: '+8.3%', trend: 'up' },
   { keyword: 'product quality', mentions: 756, change: '-2.1%', trend: 'down' },
@@ -19,12 +26,12 @@ const TopKeywords = () => {
   const { selectedDashboard, dashboardFilters } = useDashboardContext();
 
   // Fetch top keywords data from Django API
-  const { data: apiData, loading, error } = useApiData(() => 
+  const { data: apiData, loading, error } = useApiData<KeywordData[]>(() => 
     analyticsApi.getTopKeywords(selectedDashboard?.id, dashboardFilters)
   );
 
   // Use API data or fallback to default data
-  const keywordsData = apiData || defaultKeywordsData;
+  const keywordsData: KeywordData[] = Array.isArray(apiData) ? apiData : defaultKeywordsData;
 
   if (error) {
     console.warn('Failed to load top keywords data, using fallback data:', error);

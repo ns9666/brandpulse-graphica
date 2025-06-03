@@ -8,8 +8,20 @@ import { useApiData } from '@/hooks/useApiData';
 import { competitorApi } from '@/services/djangoApi';
 import { useDashboardContext } from '@/pages/Index';
 
-// Default fallback data
-const defaultCompetitorData = [
+// Updated interface to include id property
+interface CompetitorDataWithId {
+  id: number;
+  name: string;
+  mentions: number;
+  sentiment: number;
+  engagement: number;
+  trend: 'up' | 'down';
+  change: string;
+  isUser?: boolean;
+}
+
+// Default fallback data with id
+const defaultCompetitorData: CompetitorDataWithId[] = [
   {
     id: 1,
     name: 'Competitor A',
@@ -48,7 +60,7 @@ const CompetitorAnalysis = () => {
   const [isAddingCompetitor, setIsAddingCompetitor] = useState(false);
 
   // Fetch competitor data from Django API
-  const { data: apiData, loading, error, refetch } = useApiData(() => 
+  const { data: apiData, loading, error, refetch } = useApiData<CompetitorDataWithId[]>(() => 
     competitorApi.getCompetitors(selectedDashboard?.id)
   );
 
@@ -125,9 +137,9 @@ const CompetitorAnalysis = () => {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {competitorData.map((competitor, index) => (
+            {competitorData.map((competitor) => (
               <div
-                key={competitor.id || index}
+                key={competitor.id}
                 className={`p-4 rounded-lg border ${
                   competitor.isUser 
                     ? 'bg-brand-blue/5 border-brand-blue/20 ring-1 ring-brand-blue/30' 

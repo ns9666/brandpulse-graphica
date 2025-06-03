@@ -6,7 +6,13 @@ import { useApiData } from '@/hooks/useApiData';
 import { analyticsApi } from '@/services/djangoApi';
 import { useDashboardContext } from '@/pages/Index';
 
-const defaultSourceData = [
+interface SourceData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+const defaultSourceData: SourceData[] = [
   { name: 'Organic Search', value: 35, color: '#0A84FF' },
   { name: 'Direct Traffic', value: 25, color: '#34C759' },
   { name: 'Social Media', value: 20, color: '#FF9500' },
@@ -29,12 +35,12 @@ const SourceDistribution = () => {
   const { selectedDashboard, dashboardFilters } = useDashboardContext();
 
   // Fetch source distribution data from Django API
-  const { data: apiData, loading, error } = useApiData(() => 
+  const { data: apiData, loading, error } = useApiData<SourceData[]>(() => 
     analyticsApi.getSourceDistribution(selectedDashboard?.id, dashboardFilters)
   );
 
   // Use API data or fallback to default data
-  const sourceData = apiData || defaultSourceData;
+  const sourceData: SourceData[] = Array.isArray(apiData) ? apiData : defaultSourceData;
 
   if (error) {
     console.warn('Failed to load source distribution data, using fallback data:', error);
