@@ -35,25 +35,36 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Public route that redirects authenticated users to dashboards
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="h-screen w-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  return isAuthenticated ? <Navigate to="/dashboards" replace /> : <>{children}</>;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public home page */}
-      <Route path="/home" element={<Home />} />
+      {/* Public portal page - default landing */}
+      <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
       
       {/* Auth routes */}
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       </Route>
       
-      {/* Protected routes */}
-      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      {/* Protected routes - require authentication */}
+      <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
       <Route path="/mentions" element={<ProtectedRoute><Mentions /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
       <Route path="/competitor-analysis" element={<ProtectedRoute><CompetitorAnalysis /></ProtectedRoute>} />
       <Route path="/social-listening" element={<ProtectedRoute><SocialListening /></ProtectedRoute>} />
-      <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
       <Route path="/create-dashboard" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
       
       {/* Catch-all route */}

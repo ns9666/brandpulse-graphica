@@ -63,6 +63,12 @@ const Register = () => {
         });
         
         navigate('/login');
+      } else {
+        toast({
+          title: "Registration failed",
+          description: "Could not create account. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({

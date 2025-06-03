@@ -28,7 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signIn, resetPassword } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -40,20 +40,58 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const success = await login(data.email, data.password);
+      const { error } = await signIn(data.email, data.password);
       
-      if (success) {
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
         toast({
           title: "Login successful!",
           description: "Welcome back to Pulse.",
         });
-        
-        navigate('/');
       }
     } catch (error) {
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = form.getValues('email');
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await resetPassword(email);
+      if (error) {
+        toast({
+          title: "Reset failed",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Reset link sent",
+          description: "Please check your email for password reset instructions.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Reset failed",
+        description: "Failed to send reset email",
         variant: "destructive",
       });
     }
@@ -125,19 +163,12 @@ const Login = () => {
           </Form>
           
           <div className="mt-4 text-center">
-            <a 
-              href="#" 
+            <button 
+              onClick={handleForgotPassword}
               className="text-sm text-brand-blue hover:underline"
-              onClick={(e) => {
-                e.preventDefault();
-                toast({
-                  title: "Reset link sent",
-                  description: "Please check your email for password reset instructions.",
-                });
-              }}
             >
               Forgot your password?
-            </a>
+            </button>
           </div>
         </CardContent>
         

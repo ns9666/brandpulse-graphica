@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Chip from '@/components/ui/Chip';
 import DashboardFilters, { DashboardFiltersData } from './DashboardFilters';
@@ -8,7 +8,6 @@ import DashboardFilters, { DashboardFiltersData } from './DashboardFilters';
 interface DashboardHeaderProps {
   title: string;
   description?: string;
-  timeRange?: string;
   action?: React.ReactNode;
   onFiltersChange?: (filters: DashboardFiltersData) => void;
   currentFilters?: DashboardFiltersData;
@@ -26,7 +25,6 @@ const defaultFilters: DashboardFiltersData = {
 const DashboardHeader = ({ 
   title, 
   description = "Track social media mentions and analyze engagement.", 
-  timeRange = "Last 30 days",
   action,
   onFiltersChange,
   currentFilters = defaultFilters
@@ -41,10 +39,6 @@ const DashboardHeader = ({
       
       <div className="flex items-center gap-2 self-start md:self-center">
         {action && <div className="mr-2">{action}</div>}
-        <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-          <Calendar size={16} />
-          <span>{timeRange}</span>
-        </Button>
         {onFiltersChange && (
           <DashboardFilters 
             filters={currentFilters}
