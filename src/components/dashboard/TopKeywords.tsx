@@ -31,7 +31,7 @@ const TopKeywords = () => {
   );
 
   // Use API data or fallback to default data
-  const keywordsData: KeywordData[] = Array.isArray(apiData) ? apiData : defaultKeywordsData;
+  const keywordsData: KeywordData[] = Array.isArray(apiData) && apiData.length > 0 ? apiData : defaultKeywordsData;
 
   if (error) {
     console.warn('Failed to load top keywords data, using fallback data:', error);

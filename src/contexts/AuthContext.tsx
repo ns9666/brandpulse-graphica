@@ -8,18 +8,28 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
+  isLoading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isAuthenticated: false,
+  isLoading: true,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
+  login: async () => false,
+  logout: async () => {},
+  register: async () => false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -37,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Redirect to dashboard list on successful login
+        // Redirect to dashboards list on successful login
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in, redirecting to dashboards');
           navigate('/dashboards');
@@ -81,13 +91,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     navigate('/login');
   };
 
+  // Legacy method names for compatibility
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await signIn(email, password);
+    return !error;
+  };
+
+  const logout = async () => {
+    await signOut();
+  };
+
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    const { error } = await signUp(email, password);
+    return !error;
+  };
+
   const value = {
     user,
     session,
     loading,
+    isAuthenticated: !!session,
+    isLoading: loading,
     signUp,
     signIn,
     signOut,
+    login,
+    logout,
+    register,
   };
 
   return (

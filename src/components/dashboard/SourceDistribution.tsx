@@ -40,7 +40,7 @@ const SourceDistribution = () => {
   );
 
   // Use API data or fallback to default data
-  const sourceData: SourceData[] = Array.isArray(apiData) ? apiData : defaultSourceData;
+  const sourceData: SourceData[] = Array.isArray(apiData) && apiData.length > 0 ? apiData : defaultSourceData;
 
   if (error) {
     console.warn('Failed to load source distribution data, using fallback data:', error);

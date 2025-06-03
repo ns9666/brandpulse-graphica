@@ -107,7 +107,14 @@ const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<
       throw new Error(`API call failed: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // For analytics endpoints, extract the data array if it exists
+    if (data && typeof data === 'object' && 'data' in data) {
+      return data.data as T;
+    }
+    
+    return data as T;
   } catch (error) {
     console.error(`API Error for ${endpoint}:`, error);
     throw error;
@@ -452,12 +459,12 @@ export const dashboardsApi = {
   },
 };
 
-// Analytics APIs - Updated with proper filtering
+// Analytics APIs - Updated with proper typing and error handling
 export const analyticsApi = {
   // Get audience reach data
   // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
   // Expected response: { success: boolean, data: { date: string, reach: number }[] }
-  getAudienceReach: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+  getAudienceReach: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ date: string, reach: number }[]> => {
     const requestBody = { 
       timeRange, 
       dashboardId,
@@ -466,16 +473,21 @@ export const analyticsApi = {
       keywords: filters?.keywords || []
     };
     console.log('Audience Reach API call with:', requestBody);
-    return apiCall('/analytics/audience-reach/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ date: string, reach: number }[]>('/analytics/audience-reach/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch audience reach data:', error);
+      return [];
+    }
   },
 
   // Get monthly mentions data
   // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
   // Expected response: { success: boolean, data: { month: string, mentions: number }[] }
-  getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+  getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ month: string, mentions: number }[]> => {
     const requestBody = { 
       timeRange, 
       dashboardId,
@@ -485,16 +497,21 @@ export const analyticsApi = {
       keywords: filters?.keywords || []
     };
     console.log('Monthly Mentions API call with:', requestBody);
-    return apiCall('/analytics/monthly-mentions/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ month: string, mentions: number }[]>('/analytics/monthly-mentions/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch monthly mentions data:', error);
+      return [];
+    }
   },
 
   // Get engagement metrics
   // Request body: { timeRange: string, dashboardId?: number, filters?: DashboardFiltersData }
   // Expected response: { success: boolean, data: { date: string, engagement: number, likes: number, shares: number, comments: number }[] }
-  getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number, filters?: any) => {
+  getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ date: string, engagement: number, likes: number, shares: number, comments: number }[]> => {
     const requestBody = { 
       timeRange, 
       dashboardId,
@@ -504,16 +521,21 @@ export const analyticsApi = {
       maxEngagement: filters?.maxEngagement || 10000
     };
     console.log('Engagement Metrics API call with:', requestBody);
-    return apiCall('/analytics/engagement/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ date: string, engagement: number, likes: number, shares: number, comments: number }[]>('/analytics/engagement/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch engagement metrics data:', error);
+      return [];
+    }
   },
 
   // Get platform performance
   // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData }
   // Expected response: { success: boolean, data: { platform: string, mentions: number, engagement: number, reach: number }[] }
-  getPlatformPerformance: async (dashboardId?: number, filters?: any) => {
+  getPlatformPerformance: async (dashboardId?: number, filters?: any): Promise<{ platform: string, mentions: number, engagement: number, reach: number }[]> => {
     const requestBody = { 
       dashboardId, 
       timeRange: '30d',
@@ -521,16 +543,21 @@ export const analyticsApi = {
       platforms: filters?.platforms || []
     };
     console.log('Platform Performance API call with:', requestBody);
-    return apiCall('/analytics/platform-performance/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ platform: string, mentions: number, engagement: number, reach: number }[]>('/analytics/platform-performance/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch platform performance data:', error);
+      return [];
+    }
   },
 
   // Get source distribution data
   // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData }
   // Expected response: { success: boolean, data: { name: string, value: number, color: string }[] }
-  getSourceDistribution: async (dashboardId?: number, filters?: any) => {
+  getSourceDistribution: async (dashboardId?: number, filters?: any): Promise<{ name: string, value: number, color: string }[]> => {
     const requestBody = { 
       dashboardId, 
       timeRange: filters?.dateRange || '30d',
@@ -538,16 +565,21 @@ export const analyticsApi = {
       platforms: filters?.platforms || []
     };
     console.log('Source Distribution API call with:', requestBody);
-    return apiCall('/analytics/source-distribution/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ name: string, value: number, color: string }[]>('/analytics/source-distribution/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch source distribution data:', error);
+      return [];
+    }
   },
 
   // Get top keywords data
   // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData, limit?: number }
   // Expected response: { success: boolean, data: { keyword: string, mentions: number, change: string, trend: 'up'|'down' }[] }
-  getTopKeywords: async (dashboardId?: number, filters?: any) => {
+  getTopKeywords: async (dashboardId?: number, filters?: any): Promise<{ keyword: string, mentions: number, change: string, trend: 'up' | 'down' }[]> => {
     const requestBody = { 
       dashboardId, 
       timeRange: filters?.dateRange || '30d',
@@ -556,10 +588,15 @@ export const analyticsApi = {
       keywords: filters?.keywords || []
     };
     console.log('Top Keywords API call with:', requestBody);
-    return apiCall('/analytics/top-keywords/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<{ keyword: string, mentions: number, change: string, trend: 'up' | 'down' }[]>('/analytics/top-keywords/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch top keywords data:', error);
+      return [];
+    }
   },
 };
 
