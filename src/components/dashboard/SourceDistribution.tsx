@@ -36,7 +36,7 @@ const SourceDistribution = () => {
 
   // Fetch source distribution data from Django API
   const { data: apiData, loading, error } = useApiData<SourceData[]>(() => 
-    analyticsApi.getSourceDistribution(selectedDashboard?.id, dashboardFilters)
+    analyticsApi.getSourceDistribution(selectedDashboard?.id || 1, dashboardFilters)
   );
 
   // Use API data or fallback to default data

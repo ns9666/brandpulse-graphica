@@ -156,8 +156,10 @@ const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<
 export const dashboardApi = {
   // Get main dashboard statistics
   getStats: async (dashboardId?: number, filters?: any): Promise<DashboardStats> => {
+    // Use a default dashboardId of 1 if none provided
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
-      dashboardId: dashboardId || null, 
+      dashboardId: effectiveDashboardId, 
       filters: filters || {},
       dateRange: filters?.dateRange || '30d',
       platforms: filters?.platforms || [],
@@ -166,7 +168,7 @@ export const dashboardApi = {
       minEngagement: filters?.minEngagement || 0,
       maxEngagement: filters?.maxEngagement || 10000
     };
-    console.log('Dashboard Stats API call with dashboardId:', dashboardId, requestBody);
+    console.log('Dashboard Stats API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall<DashboardStats>('/dashboard/stats/', {
       method: 'POST',
       body: JSON.stringify(requestBody)
@@ -175,15 +177,16 @@ export const dashboardApi = {
 
   // Get mentions over time data for charts
   getMentionsOverTime: async (timeRange: string = '30d', dashboardId?: number, filters?: any): Promise<MentionsOverTimeResponse> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       timeRange, 
-      dashboardId: dashboardId || null,
+      dashboardId: effectiveDashboardId,
       filters: filters || {},
       platforms: filters?.platforms || [],
       sentiments: filters?.sentiments || [],
       keywords: filters?.keywords || []
     };
-    console.log('Mentions Over Time API call with dashboardId:', dashboardId, requestBody);
+    console.log('Mentions Over Time API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall<MentionsOverTimeResponse>('/dashboard/mentions-overtime/', {
       method: 'POST',
       body: JSON.stringify(requestBody)
@@ -192,14 +195,15 @@ export const dashboardApi = {
 
   // Get sentiment analysis data
   getSentimentAnalysis: async (dashboardId?: number, filters?: any): Promise<SentimentAnalysis> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
-      dashboardId: dashboardId || null, 
+      dashboardId: effectiveDashboardId, 
       filters: filters || {},
       dateRange: filters?.dateRange || '30d',
       platforms: filters?.platforms || [],
       keywords: filters?.keywords || []
     };
-    console.log('Sentiment Analysis API call with dashboardId:', dashboardId, requestBody);
+    console.log('Sentiment Analysis API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall<SentimentAnalysis>('/dashboard/sentiment-analysis/', {
       method: 'POST',
       body: JSON.stringify(requestBody)
@@ -252,6 +256,7 @@ export const mentionsApi = {
     engagementLevel?: string;
     dashboardId?: number;
   }): Promise<PaginatedResponse<MentionData>> => {
+    const effectiveDashboardId = params.dashboardId || 1;
     const requestBody = {
       page: params.page || 1,
       pageSize: params.pageSize || 20,
@@ -260,9 +265,9 @@ export const mentionsApi = {
       sentiments: params.sentiments || [],
       dateRange: params.dateRange || '30d',
       engagementLevel: params.engagementLevel || 'all',
-      dashboardId: params.dashboardId || null
+      dashboardId: effectiveDashboardId
     };
-    console.log('Mentions Search API call with dashboardId:', params.dashboardId, requestBody);
+    console.log('Mentions Search API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall<PaginatedResponse<MentionData>>('/mentions/search/', {
       method: 'POST',
       body: JSON.stringify(requestBody)
@@ -284,11 +289,12 @@ export const mentionsApi = {
 export const competitorApi = {
   // Get competitor analysis data
   getCompetitors: async (dashboardId?: number): Promise<CompetitorDataWithId[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
-      dashboardId: dashboardId || null, 
+      dashboardId: effectiveDashboardId, 
       includeUserBrand: true 
     };
-    console.log('Competitors List API call with dashboardId:', dashboardId, requestBody);
+    console.log('Competitors List API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall<CompetitorDataWithId[]>('/competitors/list/', {
       method: 'POST',
       body: JSON.stringify(requestBody)
@@ -297,11 +303,12 @@ export const competitorApi = {
 
   // Add new competitor for tracking
   addCompetitor: async (competitorData: { name: string; website?: string; dashboardId?: number }) => {
+    const effectiveDashboardId = competitorData.dashboardId || 1;
     const requestBody = {
       ...competitorData,
-      dashboardId: competitorData.dashboardId || null
+      dashboardId: effectiveDashboardId
     };
-    console.log('Add Competitor API call with dashboardId:', competitorData.dashboardId, requestBody);
+    console.log('Add Competitor API call with dashboardId:', effectiveDashboardId, requestBody);
     return apiCall('/competitors/add/', {
       method: 'POST',
       body: JSON.stringify(requestBody),
@@ -365,12 +372,13 @@ export const competitorApi = {
 export const socialListeningApi = {
   // Get trending topics
   getTrendingTopics: async (dashboardId?: number): Promise<TrendingTopic[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       timeRange: '24h', 
       limit: 10, 
-      dashboardId: dashboardId || null 
+      dashboardId: effectiveDashboardId 
     };
-    console.log('Trending Topics API call with dashboardId:', dashboardId, requestBody);
+    console.log('Trending Topics API call with dashboardId:', effectiveDashboardId, requestBody);
     try {
       return await apiCall<TrendingTopic[]>('/social-listening/trending-topics/', {
         method: 'POST',
@@ -559,16 +567,60 @@ export const dashboardsApi = {
 
 // Analytics APIs - Updated with proper typing and error handling
 export const analyticsApi = {
+  // Get top keywords data
+  getTopKeywords: async (dashboardId?: number, filters?: any): Promise<{ keyword: string, mentions: number, change: string, trend: 'up'|'down' }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
+    const requestBody = { 
+      dashboardId: effectiveDashboardId, 
+      timeRange: filters?.dateRange || '30d',
+      limit: 10,
+      filters: filters || {},
+      keywords: filters?.keywords || []
+    };
+    console.log('Top Keywords API call with dashboardId:', effectiveDashboardId, requestBody);
+    try {
+      return await apiCall<{ keyword: string, mentions: number, change: string, trend: 'up'|'down' }[]>('/analytics/top-keywords/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch top keywords data:', error);
+      return [];
+    }
+  },
+
+  // Get source distribution data
+  getSourceDistribution: async (dashboardId?: number, filters?: any): Promise<{ name: string, value: number, color: string }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
+    const requestBody = { 
+      dashboardId: effectiveDashboardId, 
+      timeRange: filters?.dateRange || '30d',
+      filters: filters || {},
+      platforms: filters?.platforms || []
+    };
+    console.log('Source Distribution API call with dashboardId:', effectiveDashboardId, requestBody);
+    try {
+      return await apiCall<{ name: string, value: number, color: string }[]>('/analytics/source-distribution/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch source distribution data:', error);
+      return [];
+    }
+  },
+
   // Get audience reach data
   getAudienceReach: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ date: string, reach: number }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       timeRange, 
-      dashboardId,
+      dashboardId: effectiveDashboardId,
       filters: filters || {},
       platforms: filters?.platforms || [],
       keywords: filters?.keywords || []
     };
-    console.log('Audience Reach API call with:', requestBody);
+    console.log('Audience Reach API call with dashboardId:', effectiveDashboardId, requestBody);
     try {
       return await apiCall<{ date: string, reach: number }[]>('/analytics/audience-reach/', {
         method: 'POST',
@@ -582,15 +634,16 @@ export const analyticsApi = {
 
   // Get monthly mentions data
   getMonthlyMentions: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ month: string, mentions: number }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       timeRange, 
-      dashboardId,
+      dashboardId: effectiveDashboardId,
       filters: filters || {},
       platforms: filters?.platforms || [],
       sentiments: filters?.sentiments || [],
       keywords: filters?.keywords || []
     };
-    console.log('Monthly Mentions API call with:', requestBody);
+    console.log('Monthly Mentions API call with dashboardId:', effectiveDashboardId, requestBody);
     try {
       return await apiCall<{ month: string, mentions: number }[]>('/analytics/monthly-mentions/', {
         method: 'POST',
@@ -604,6 +657,7 @@ export const analyticsApi = {
 
   // Get engagement metrics
   getEngagementMetrics: async (timeRange: string = '6m', dashboardId?: number, filters?: any): Promise<{ date: string, engagement: number, likes: number, shares: number, comments: number }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       timeRange, 
       dashboardId,
@@ -626,6 +680,7 @@ export const analyticsApi = {
 
   // Get platform performance
   getPlatformPerformance: async (dashboardId?: number, filters?: any): Promise<{ platform: string, mentions: number, engagement: number, reach: number }[]> => {
+    const effectiveDashboardId = dashboardId || 1;
     const requestBody = { 
       dashboardId, 
       timeRange: '30d',
@@ -640,47 +695,6 @@ export const analyticsApi = {
       });
     } catch (error) {
       console.warn('Failed to fetch platform performance data:', error);
-      return [];
-    }
-  },
-
-  // Get source distribution data
-  getSourceDistribution: async (dashboardId?: number, filters?: any): Promise<{ name: string, value: number, color: string }[]> => {
-    const requestBody = { 
-      dashboardId, 
-      timeRange: filters?.dateRange || '30d',
-      filters: filters || {},
-      platforms: filters?.platforms || []
-    };
-    console.log('Source Distribution API call with:', requestBody);
-    try {
-      return await apiCall<{ name: string, value: number, color: string }[]>('/analytics/source-distribution/', {
-        method: 'POST',
-        body: JSON.stringify(requestBody)
-      });
-    } catch (error) {
-      console.warn('Failed to fetch source distribution data:', error);
-      return [];
-    }
-  },
-
-  // Get top keywords data
-  getTopKeywords: async (dashboardId?: number, filters?: any): Promise<{ keyword: string, mentions: number, change: string, trend: 'up'|'down' }[]> => {
-    const requestBody = { 
-      dashboardId, 
-      timeRange: filters?.dateRange || '30d',
-      limit: 10,
-      filters: filters || {},
-      keywords: filters?.keywords || []
-    };
-    console.log('Top Keywords API call with:', requestBody);
-    try {
-      return await apiCall<{ keyword: string, mentions: number, change: string, trend: 'up'|'down' }[]>('/analytics/top-keywords/', {
-        method: 'POST',
-        body: JSON.stringify(requestBody)
-      });
-    } catch (error) {
-      console.warn('Failed to fetch top keywords data:', error);
       return [];
     }
   },

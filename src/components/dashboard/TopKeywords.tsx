@@ -27,7 +27,7 @@ const TopKeywords = () => {
 
   // Fetch top keywords data from Django API
   const { data: apiData, loading, error } = useApiData<KeywordData[]>(() => 
-    analyticsApi.getTopKeywords(selectedDashboard?.id, dashboardFilters)
+    analyticsApi.getTopKeywords(selectedDashboard?.id || 1, dashboardFilters)
   );
 
   // Use API data or fallback to default data

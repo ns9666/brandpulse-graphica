@@ -1,26 +1,13 @@
 
-import React, { useState } from 'react';
-import { Calendar, Filter, X, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Filter, X, Calendar, Hash, TrendingUp } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface DashboardFiltersData {
   dateRange: string;
@@ -32,61 +19,84 @@ export interface DashboardFiltersData {
 }
 
 interface DashboardFiltersProps {
+  filters: DashboardFiltersData;
   onFiltersChange: (filters: DashboardFiltersData) => void;
-  currentFilters: DashboardFiltersData;
 }
 
-const DashboardFilters = ({ onFiltersChange, currentFilters }: DashboardFiltersProps) => {
-  const [tempFilters, setTempFilters] = useState<DashboardFiltersData>(currentFilters);
+const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState<DashboardFiltersData>(filters);
+  const [keywordInput, setKeywordInput] = useState('');
 
-  const platforms = [
-    { id: 'twitter', label: 'Twitter' },
-    { id: 'instagram', label: 'Instagram' },
-    { id: 'facebook', label: 'Facebook' },
-    { id: 'reddit', label: 'Reddit' },
-    { id: 'linkedin', label: 'LinkedIn' },
-    { id: 'news', label: 'News' },
-  ];
+  // Update temp filters when props change
+  useEffect(() => {
+    setTempFilters(filters);
+  }, [filters]);
 
-  const sentiments = [
-    { id: 'positive', label: 'Positive' },
-    { id: 'neutral', label: 'Neutral' },
-    { id: 'negative', label: 'Negative' },
-  ];
-
+  const platforms = ['twitter', 'instagram', 'facebook', 'linkedin', 'reddit', 'youtube', 'tiktok'];
+  const sentiments = ['positive', 'neutral', 'negative'];
   const dateRanges = [
     { value: '7d', label: 'Last 7 days' },
     { value: '30d', label: 'Last 30 days' },
     { value: '90d', label: 'Last 3 months' },
-    { value: '6m', label: 'Last 6 months' },
-    { value: '1y', label: 'Last year' },
-    { value: 'custom', label: 'Custom range' },
+    { value: '180d', label: 'Last 6 months' },
+    { value: '1y', label: 'Last year' }
   ];
 
-  const handlePlatformChange = (platformId: string, checked: boolean) => {
-    const newPlatforms = checked
-      ? [...tempFilters.platforms, platformId]
-      : tempFilters.platforms.filter(p => p !== platformId);
-    
-    setTempFilters({ ...tempFilters, platforms: newPlatforms });
+  // Calculate total applied filters
+  const getAppliedFiltersCount = () => {
+    let count = 0;
+    if (tempFilters.platforms.length > 0) count += tempFilters.platforms.length;
+    if (tempFilters.sentiments.length > 0) count += tempFilters.sentiments.length;
+    if (tempFilters.keywords.length > 0) count += tempFilters.keywords.length;
+    if (tempFilters.dateRange !== '30d') count += 1; // Default is 30d, so count if different
+    if (tempFilters.minEngagement > 0 || tempFilters.maxEngagement < 10000) count += 1;
+    return count;
   };
 
-  const handleSentimentChange = (sentimentId: string, checked: boolean) => {
-    const newSentiments = checked
-      ? [...tempFilters.sentiments, sentimentId]
-      : tempFilters.sentiments.filter(s => s !== sentimentId);
-    
-    setTempFilters({ ...tempFilters, sentiments: newSentiments });
+  const handlePlatformChange = (platform: string, checked: boolean) => {
+    setTempFilters(prev => ({
+      ...prev,
+      platforms: checked 
+        ? [...prev.platforms, platform]
+        : prev.platforms.filter(p => p !== platform)
+    }));
   };
 
-  const applyFilters = () => {
+  const handleSentimentChange = (sentiment: string, checked: boolean) => {
+    setTempFilters(prev => ({
+      ...prev,
+      sentiments: checked 
+        ? [...prev.sentiments, sentiment]
+        : prev.sentiments.filter(s => s !== sentiment)
+    }));
+  };
+
+  const handleAddKeyword = () => {
+    if (keywordInput.trim() && !tempFilters.keywords.includes(keywordInput.trim())) {
+      setTempFilters(prev => ({
+        ...prev,
+        keywords: [...prev.keywords, keywordInput.trim()]
+      }));
+      setKeywordInput('');
+    }
+  };
+
+  const handleRemoveKeyword = (keyword: string) => {
+    setTempFilters(prev => ({
+      ...prev,
+      keywords: prev.keywords.filter(k => k !== keyword)
+    }));
+  };
+
+  const handleApplyFilters = () => {
+    console.log('Applying filters:', tempFilters);
     onFiltersChange(tempFilters);
     setIsOpen(false);
   };
 
-  const resetFilters = () => {
-    const defaultFilters: DashboardFiltersData = {
+  const handleResetFilters = () => {
+    const resetFilters: DashboardFiltersData = {
       dateRange: '30d',
       platforms: [],
       sentiments: [],
@@ -94,53 +104,50 @@ const DashboardFilters = ({ onFiltersChange, currentFilters }: DashboardFiltersP
       minEngagement: 0,
       maxEngagement: 10000,
     };
-    setTempFilters(defaultFilters);
-    onFiltersChange(defaultFilters);
+    setTempFilters(resetFilters);
+    onFiltersChange(resetFilters);
   };
 
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (currentFilters.platforms.length > 0) count++;
-    if (currentFilters.sentiments.length > 0) count++;
-    if (currentFilters.keywords.length > 0) count++;
-    if (currentFilters.dateRange !== '30d') count++;
-    return count;
-  };
-
-  const activeFiltersCount = getActiveFiltersCount();
+  const appliedCount = getAppliedFiltersCount();
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-1.5 relative">
-          <Filter size={16} />
-          <span>Filters</span>
-          {activeFiltersCount > 0 && (
-            <Badge variant="destructive" className="ml-1 px-1 py-0 text-xs h-4 min-w-4">
-              {activeFiltersCount}
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="relative">
+          <Filter className="mr-2 h-4 w-4" />
+          Filters
+          {appliedCount > 0 && (
+            <Badge 
+              variant="secondary" 
+              className="ml-2 bg-brand-blue text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5"
+            >
+              {appliedCount}
             </Badge>
           )}
         </Button>
-      </SheetTrigger>
+      </PopoverTrigger>
       
-      <SheetContent className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle>Dashboard Filters</SheetTitle>
-          <SheetDescription>
-            Customize your dashboard data by applying filters below.
-          </SheetDescription>
-        </SheetHeader>
-        
-        <div className="mt-6 space-y-6">
+      <PopoverContent className="w-80 p-6" align="end">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Filters</h3>
+            <Button variant="ghost" size="sm" onClick={handleResetFilters}>
+              Reset
+            </Button>
+          </div>
+
           {/* Date Range */}
-          <div className="space-y-2">
-            <Label>Date Range</Label>
-            <Select
-              value={tempFilters.dateRange}
-              onValueChange={(value) => setTempFilters({ ...tempFilters, dateRange: value })}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Date Range
+            </Label>
+            <Select 
+              value={tempFilters.dateRange} 
+              onValueChange={(value) => setTempFilters(prev => ({ ...prev, dateRange: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select date range" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {dateRanges.map((range) => (
@@ -155,18 +162,19 @@ const DashboardFilters = ({ onFiltersChange, currentFilters }: DashboardFiltersP
           {/* Platforms */}
           <div className="space-y-3">
             <Label>Platforms</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {platforms.map((platform) => (
-                <div key={platform.id} className="flex items-center space-x-2">
+                <div key={platform} className="flex items-center space-x-2">
                   <Checkbox
-                    id={platform.id}
-                    checked={tempFilters.platforms.includes(platform.id)}
-                    onCheckedChange={(checked) => 
-                      handlePlatformChange(platform.id, checked as boolean)
-                    }
+                    id={platform}
+                    checked={tempFilters.platforms.includes(platform)}
+                    onCheckedChange={(checked) => handlePlatformChange(platform, checked as boolean)}
                   />
-                  <Label htmlFor={platform.id} className="text-sm">
-                    {platform.label}
+                  <Label 
+                    htmlFor={platform} 
+                    className="text-sm font-normal capitalize cursor-pointer"
+                  >
+                    {platform}
                   </Label>
                 </div>
               ))}
@@ -175,19 +183,23 @@ const DashboardFilters = ({ onFiltersChange, currentFilters }: DashboardFiltersP
 
           {/* Sentiments */}
           <div className="space-y-3">
-            <Label>Sentiment</Label>
-            <div className="flex gap-3">
+            <Label className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Sentiment
+            </Label>
+            <div className="flex gap-2">
               {sentiments.map((sentiment) => (
-                <div key={sentiment.id} className="flex items-center space-x-2">
+                <div key={sentiment} className="flex items-center space-x-2">
                   <Checkbox
-                    id={sentiment.id}
-                    checked={tempFilters.sentiments.includes(sentiment.id)}
-                    onCheckedChange={(checked) => 
-                      handleSentimentChange(sentiment.id, checked as boolean)
-                    }
+                    id={sentiment}
+                    checked={tempFilters.sentiments.includes(sentiment)}
+                    onCheckedChange={(checked) => handleSentimentChange(sentiment, checked as boolean)}
                   />
-                  <Label htmlFor={sentiment.id} className="text-sm">
-                    {sentiment.label}
+                  <Label 
+                    htmlFor={sentiment} 
+                    className="text-sm font-normal capitalize cursor-pointer"
+                  >
+                    {sentiment}
                   </Label>
                 </div>
               ))}
@@ -195,95 +207,73 @@ const DashboardFilters = ({ onFiltersChange, currentFilters }: DashboardFiltersP
           </div>
 
           {/* Keywords */}
-          <div className="space-y-2">
-            <Label>Additional Keywords</Label>
-            <Input
-              placeholder="Enter keywords separated by commas"
-              value={tempFilters.keywords.join(', ')}
-              onChange={(e) => 
-                setTempFilters({ 
-                  ...tempFilters, 
-                  keywords: e.target.value.split(',').map(k => k.trim()).filter(k => k)
-                })
-              }
-            />
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Hash className="h-4 w-4" />
+              Keywords
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add keyword..."
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleAddKeyword}>
+                Add
+              </Button>
+            </div>
+            {tempFilters.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tempFilters.keywords.map((keyword) => (
+                  <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
+                    {keyword}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => handleRemoveKeyword(keyword)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Engagement Range */}
           <div className="space-y-3">
             <Label>Engagement Range</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="min-engagement" className="text-xs text-muted-foreground">
-                  Minimum
-                </Label>
-                <Input
-                  id="min-engagement"
-                  type="number"
-                  value={tempFilters.minEngagement}
-                  onChange={(e) => 
-                    setTempFilters({ 
-                      ...tempFilters, 
-                      minEngagement: parseInt(e.target.value) || 0 
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="max-engagement" className="text-xs text-muted-foreground">
-                  Maximum
-                </Label>
-                <Input
-                  id="max-engagement"
-                  type="number"
-                  value={tempFilters.maxEngagement}
-                  onChange={(e) => 
-                    setTempFilters({ 
-                      ...tempFilters, 
-                      maxEngagement: parseInt(e.target.value) || 10000 
-                    })
-                  }
-                />
-              </div>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="Min"
+                value={tempFilters.minEngagement}
+                onChange={(e) => setTempFilters(prev => ({ 
+                  ...prev, 
+                  minEngagement: parseInt(e.target.value) || 0 
+                }))}
+                className="w-20"
+              />
+              <span className="text-muted-foreground">to</span>
+              <Input
+                type="number"
+                placeholder="Max"
+                value={tempFilters.maxEngagement}
+                onChange={(e) => setTempFilters(prev => ({ 
+                  ...prev, 
+                  maxEngagement: parseInt(e.target.value) || 10000 
+                }))}
+                className="w-20"
+              />
             </div>
           </div>
 
-          {/* Applied Filters */}
-          {activeFiltersCount > 0 && (
-            <div className="space-y-2">
-              <Label>Applied Filters</Label>
-              <div className="flex flex-wrap gap-2">
-                {currentFilters.platforms.map((platform) => (
-                  <Badge key={platform} variant="secondary">
-                    {platforms.find(p => p.id === platform)?.label}
-                  </Badge>
-                ))}
-                {currentFilters.sentiments.map((sentiment) => (
-                  <Badge key={sentiment} variant="secondary">
-                    {sentiments.find(s => s.id === sentiment)?.label}
-                  </Badge>
-                ))}
-                {currentFilters.dateRange !== '30d' && (
-                  <Badge variant="secondary">
-                    {dateRanges.find(d => d.value === currentFilters.dateRange)?.label}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex gap-3">
-          <Button onClick={applyFilters} className="flex-1">
-            Apply Filters
-          </Button>
-          <Button variant="outline" onClick={resetFilters}>
-            Reset
+          {/* Apply Button */}
+          <Button onClick={handleApplyFilters} className="w-full bg-brand-blue hover:bg-brand-blue/90">
+            Apply Filters ({appliedCount})
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </PopoverContent>
+    </Popover>
   );
 };
 

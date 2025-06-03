@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
@@ -29,7 +30,7 @@ const SentimentAnalysis = () => {
 
   // Fetch sentiment analysis data from Django API with dashboard context
   const { data: apiData, loading, error } = useApiData(() => 
-    dashboardApi.getSentimentAnalysis(selectedDashboard?.id, dashboardFilters)
+    dashboardApi.getSentimentAnalysis(selectedDashboard?.id || 1, dashboardFilters)
   );
 
   // Convert API data to chart format or use fallback

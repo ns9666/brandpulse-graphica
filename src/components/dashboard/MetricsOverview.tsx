@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ArrowDown, ArrowUp, BarChart3, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
@@ -65,7 +66,7 @@ const MetricsOverview = () => {
 
   // Fetch dashboard stats from Django API with dashboard context
   const { data: stats, loading, error } = useApiData(() => 
-    dashboardApi.getStats(selectedDashboard?.id, dashboardFilters)
+    dashboardApi.getStats(selectedDashboard?.id || 1, dashboardFilters)
   );
 
   // Fallback data if API fails

@@ -1,10 +1,12 @@
-
 import React, { useState } from 'react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
 import Chip from '@/components/ui/Chip';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Brain, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { useApiData } from '@/hooks/useApiData';
+import { dashboardApi } from '@/services/djangoApi';
+import { useDashboardContext } from '@/pages/Index';
 
 // Sample data for predictive trends
 const predictiveData = [
@@ -39,7 +41,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const PredictiveInsights = () => {
+  const { selectedDashboard, dashboardFilters } = useDashboardContext();
   const [showTextAnalysis, setShowTextAnalysis] = useState(false);
+
+  // Fetch predictive insights from Django API
+  const { data: apiData, loading, error } = useApiData(() => 
+    dashboardApi.getPredictiveInsights(selectedDashboard?.id || 1, dashboardFilters)
+  );
+
+  if (error) {
+    console.warn('Failed to load predictive insights, using fallback data:', error);
+  }
 
   const insights = [
     {

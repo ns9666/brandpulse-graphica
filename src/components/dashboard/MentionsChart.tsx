@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
@@ -44,7 +45,7 @@ const MentionsChart = () => {
   
   // Fetch mentions over time data from Django API with dashboard context
   const { data: apiData, loading, error, refetch } = useApiData<MentionsOverTimeResponse>(
-    () => dashboardApi.getMentionsOverTime(timeRange, selectedDashboard?.id, dashboardFilters),
+    () => dashboardApi.getMentionsOverTime(timeRange, selectedDashboard?.id || 1, dashboardFilters),
     [timeRange]
   );
 
