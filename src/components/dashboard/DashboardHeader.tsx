@@ -48,7 +48,6 @@ const DashboardHeader = ({
         {onFiltersChange && (
           <DashboardFilters 
             onFiltersChange={onFiltersChange}
-            currentFilters={currentFilters}
           />
         )}
       </div>

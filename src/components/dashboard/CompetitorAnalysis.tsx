@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -10,7 +11,22 @@ import { competitorApi } from '@/services/djangoApi';
 import { useDashboardContext } from '@/pages/Index';
 import { toast } from 'sonner';
 
-const competitorData = [
+interface CompetitorData {
+  id: number;
+  name: string;
+  logo: string;
+  mentions: number;
+  sentiment: number;
+  engagement: number;
+  reach: number;
+  trend: string;
+  change: string;
+  marketShare: number;
+  growthRate: number;
+  isUser?: boolean;
+}
+
+const competitorData: CompetitorData[] = [
   {
     id: 1,
     name: 'Competitor A',
@@ -138,8 +154,22 @@ const CompetitorAnalysis = () => {
     competitorApi.getMentionsComparison(selectedDashboard?.id || 1)
   );
 
-  // Use API data or fallback to default data
-  const competitorsData = apiCompetitors || competitorData;
+  // Transform API data to match our interface or use fallback data
+  const competitorsData: CompetitorData[] = apiCompetitors ? 
+    (Array.isArray(apiCompetitors) ? apiCompetitors.map((competitor: any) => ({
+      id: competitor.id,
+      name: competitor.name || 'Unknown',
+      logo: competitor.logo || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=40&h=40&fit=crop',
+      mentions: competitor.mentions || 0,
+      sentiment: competitor.sentiment || 0,
+      engagement: competitor.engagement || 0,
+      reach: competitor.reach || 0,
+      trend: competitor.trend || 'up',
+      change: competitor.change || '0%',
+      marketShare: competitor.marketShare || 0,
+      growthRate: competitor.growthRate || 0,
+      isUser: competitor.isUser || false
+    })) : []) : competitorData;
 
   if (competitorError) {
     console.warn('Failed to load competitors data:', competitorError);
