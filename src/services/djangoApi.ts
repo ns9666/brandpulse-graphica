@@ -82,6 +82,33 @@ export interface TrendingTopic {
   sentiment: number;
 }
 
+// Add missing types for Social Listening
+export interface Alert {
+  id: number;
+  type: string;
+  message: string;
+  severity: 'high' | 'medium' | 'low';
+  timestamp: string;
+}
+
+export interface Influencer {
+  id: number;
+  name: string;
+  platform: string;
+  followers: number;
+  engagement: number;
+  mentions: number;
+}
+
+export interface ViralContent {
+  id: number;
+  content: string;
+  platform: string;
+  engagement: number;
+  shares: number;
+  timestamp: string;
+}
+
 // Helper function to get auth headers
 const getAuthHeaders = async () => {
   // Get current user session from Supabase for authentication
@@ -334,7 +361,7 @@ export const competitorApi = {
   },
 };
 
-// Social Listening APIs - Converted to POST with dashboardId
+// Social Listening APIs - Converted to POST with dashboardId and proper typing
 export const socialListeningApi = {
   // Get trending topics
   getTrendingTopics: async (dashboardId?: number): Promise<TrendingTopic[]> => {
@@ -344,10 +371,15 @@ export const socialListeningApi = {
       dashboardId: dashboardId || null 
     };
     console.log('Trending Topics API call with dashboardId:', dashboardId, requestBody);
-    return apiCall<TrendingTopic[]>('/social-listening/trending-topics/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<TrendingTopic[]>('/social-listening/trending-topics/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch trending topics:', error);
+      return [];
+    }
   },
 
   // Get tracked keywords
@@ -370,16 +402,21 @@ export const socialListeningApi = {
   },
 
   // Get alerts
-  getAlerts: async (dashboardId?: number) => {
+  getAlerts: async (dashboardId?: number): Promise<Alert[]> => {
     const requestBody = { 
       dashboardId: dashboardId || null, 
       status: 'active' 
     };
     console.log('Alerts API call with dashboardId:', dashboardId, requestBody);
-    return apiCall('/social-listening/alerts/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<Alert[]>('/social-listening/alerts/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch alerts:', error);
+      return [];
+    }
   },
 
   // Create new alert
@@ -418,31 +455,41 @@ export const socialListeningApi = {
   },
 
   // Get influencer tracking data
-  getInfluencerTracking: async (dashboardId?: number) => {
+  getInfluencerTracking: async (dashboardId?: number): Promise<Influencer[]> => {
     const requestBody = { 
       dashboardId: dashboardId || null,
       timeRange: '30d',
       limit: 20
     };
     console.log('Influencer Tracking API call with dashboardId:', dashboardId, requestBody);
-    return apiCall('/social-listening/influencer-tracking/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<Influencer[]>('/social-listening/influencer-tracking/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch influencer tracking:', error);
+      return [];
+    }
   },
 
   // Get viral content data
-  getViralContent: async (dashboardId?: number) => {
+  getViralContent: async (dashboardId?: number): Promise<ViralContent[]> => {
     const requestBody = { 
       dashboardId: dashboardId || null,
       timeRange: '7d',
       minEngagement: 1000
     };
     console.log('Viral Content API call with dashboardId:', dashboardId, requestBody);
-    return apiCall('/social-listening/viral-content/', {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    });
+    try {
+      return await apiCall<ViralContent[]>('/social-listening/viral-content/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch viral content:', error);
+      return [];
+    }
   },
 };
 
