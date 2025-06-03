@@ -40,6 +40,19 @@ export function useApiData<T>(
     fetchData();
   }, [fetchData]);
 
+  // Listen for dashboard filter changes
+  useEffect(() => {
+    const handleFilterChange = () => {
+      fetchData();
+    };
+
+    window.addEventListener('dashboardFiltersChanged', handleFilterChange);
+    
+    return () => {
+      window.removeEventListener('dashboardFiltersChanged', handleFilterChange);
+    };
+  }, [fetchData]);
+
   return {
     data,
     loading,

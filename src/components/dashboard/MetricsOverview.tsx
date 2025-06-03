@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { ArrowDown, ArrowUp, BarChart3, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
 import { cn } from '@/lib/utils';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardApi } from '@/services/djangoApi';
+import { useDashboardContext } from '@/pages/Index';
 
 interface MetricCardProps {
   title: string;
@@ -61,8 +61,12 @@ const MetricCard = ({ title, value, change, icon: Icon, loading }: MetricCardPro
 };
 
 const MetricsOverview = () => {
-  // Fetch dashboard stats from Django API
-  const { data: stats, loading, error } = useApiData(() => dashboardApi.getStats());
+  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+
+  // Fetch dashboard stats from Django API with dashboard context
+  const { data: stats, loading, error } = useApiData(() => 
+    dashboardApi.getStats(selectedDashboard?.id, dashboardFilters)
+  );
 
   // Fallback data if API fails
   const defaultMetrics = [

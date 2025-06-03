@@ -481,6 +481,39 @@ export const analyticsApi = {
       })
     });
   },
+
+  // Get source distribution data
+  // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData }
+  // Expected response: { success: boolean, data: { name: string, value: number, color: string }[] }
+  getSourceDistribution: async (dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/source-distribution/ with:', { dashboardId, filters });
+    return apiCall('/analytics/source-distribution/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        dashboardId, 
+        timeRange: filters?.dateRange || '30d',
+        filters: filters || {},
+        platforms: filters?.platforms || []
+      })
+    });
+  },
+
+  // Get top keywords data
+  // Request body: { dashboardId?: number, timeRange?: string, filters?: DashboardFiltersData, limit?: number }
+  // Expected response: { success: boolean, data: { keyword: string, mentions: number, change: string, trend: 'up'|'down' }[] }
+  getTopKeywords: async (dashboardId?: number, filters?: any) => {
+    console.log('Calling /api/analytics/top-keywords/ with:', { dashboardId, filters });
+    return apiCall('/analytics/top-keywords/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        dashboardId, 
+        timeRange: filters?.dateRange || '30d',
+        limit: 10,
+        filters: filters || {},
+        keywords: filters?.keywords || []
+      })
+    });
+  },
 };
 
 // Add new types for dashboard management
