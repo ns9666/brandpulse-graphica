@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, Users, MessageSquare, Plus } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
@@ -64,12 +64,32 @@ const CompetitorAnalysis = () => {
     competitorApi.getCompetitors(selectedDashboard?.id)
   );
 
+  // Fetch performance radar data
+  const { data: performanceData, loading: performanceLoading } = useApiData(() => 
+    competitorApi.getPerformanceRadar(selectedDashboard?.id)
+  );
+
+  // Fetch mentions comparison data
+  const { data: mentionsData, loading: mentionsLoading } = useApiData(() => 
+    competitorApi.getMentionsComparison(selectedDashboard?.id)
+  );
+
   // Use API data or fallback to default data
   const competitorData = apiData || defaultCompetitorData;
 
   if (error) {
     console.warn('Failed to load competitor analysis data, using fallback data:', error);
   }
+
+  // Log the additional API data for debugging
+  useEffect(() => {
+    if (performanceData) {
+      console.log('Performance Radar Data:', performanceData);
+    }
+    if (mentionsData) {
+      console.log('Mentions Comparison Data:', mentionsData);
+    }
+  }, [performanceData, mentionsData]);
 
   const handleAddCompetitor = async () => {
     if (!newCompetitorName.trim()) return;
@@ -194,6 +214,15 @@ const CompetitorAnalysis = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Performance Radar and Mentions Comparison Debug Info */}
+        {(performanceLoading || mentionsLoading) && (
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              Loading additional competitor data (Performance Radar, Mentions Comparison)...
+            </p>
           </div>
         )}
       </MotionCard>

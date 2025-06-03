@@ -34,7 +34,7 @@ export function useApiData<T>(
     } finally {
       setLoading(false);
     }
-  }, dependencies);
+  }, [...dependencies]);
 
   useEffect(() => {
     fetchData();
@@ -43,6 +43,7 @@ export function useApiData<T>(
   // Listen for dashboard filter changes
   useEffect(() => {
     const handleFilterChange = () => {
+      console.log('Dashboard filters changed, refetching data...');
       fetchData();
     };
 
