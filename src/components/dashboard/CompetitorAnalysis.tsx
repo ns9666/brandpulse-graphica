@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -8,7 +7,7 @@ import { Plus, TrendingUp, TrendingDown, Users, MessageSquare, Eye, Award, Targe
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { useApiData } from '@/hooks/useApiData';
 import { competitorApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 import { toast } from 'sonner';
 
 interface CompetitorData {
@@ -134,24 +133,24 @@ const radarData = [
 ];
 
 const CompetitorAnalysis = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
   const [selectedCompetitors, setSelectedCompetitors] = useState([3]); // Start with user's brand selected
   const [timeRange, setTimeRange] = useState('30days');
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Fetch competitors data from API
   const { data: apiCompetitors, loading: loadingCompetitors, error: competitorError } = useApiData(() => 
-    competitorApi.getCompetitors(selectedDashboard?.id || 1)
+    competitorApi.getCompetitors(currentDashboard?.id || 1)
   );
 
   // Fetch performance radar data
   const { data: radarApiData, loading: loadingRadar, error: radarError } = useApiData(() => 
-    competitorApi.getPerformanceRadar(selectedDashboard?.id || 1)
+    competitorApi.getPerformanceRadar(currentDashboard?.id || 1)
   );
 
   // Fetch mentions comparison data
   const { data: mentionsApiData, loading: loadingMentions, error: mentionsError } = useApiData(() => 
-    competitorApi.getMentionsComparison(selectedDashboard?.id || 1)
+    competitorApi.getMentionsComparison(currentDashboard?.id || 1)
   );
 
   // Transform API data to match our interface or use fallback data
@@ -196,19 +195,19 @@ const CompetitorAnalysis = () => {
 
   const handleSubmitCompetitor = async (name: string, website?: string) => {
     try {
-      console.log('Adding competitor:', { name, website, dashboardId: selectedDashboard?.id });
+      console.log('Adding competitor:', { name, website, dashboardId: currentDashboard?.id });
       await competitorApi.addCompetitor({
         name,
         website,
-        dashboardId: selectedDashboard?.id || 1
+        dashboardId: currentDashboard?.id || 1
       });
       toast.success('Competitor added successfully');
       setShowAddModal(false);
       // Refresh the competitors list
       window.dispatchEvent(new CustomEvent('dashboardFiltersChanged', { 
         detail: { 
-          filters: dashboardFilters, 
-          dashboardId: selectedDashboard?.id 
+          filters: {}, 
+          dashboardId: currentDashboard?.id 
         } 
       }));
     } catch (error) {
