@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
 import { useApiData } from '@/hooks/useApiData';
 import { analyticsApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 interface SourceData {
   name: string;
@@ -32,11 +31,11 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const SourceDistribution = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
 
   // Fetch source distribution data from Django API
   const { data: apiData, loading, error } = useApiData<SourceData[]>(() => 
-    analyticsApi.getSourceDistribution(selectedDashboard?.id || 1, dashboardFilters)
+    analyticsApi.getSourceDistribution(currentDashboard?.id || 1, {})
   );
 
   // Use API data or fallback to default data

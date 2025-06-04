@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
 import { useApiData } from '@/hooks/useApiData';
 import { analyticsApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 const defaultAnalyticsData = [
   { date: 'Jan', audienceReach: 400, monthlyMentions: 240 },
@@ -37,18 +36,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const AnalyticsChart = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
   const [metric, setMetric] = useState<'audienceReach' | 'monthlyMentions'>('audienceReach');
   const [timeRange, setTimeRange] = useState('6m');
 
   // Fetch audience reach data
   const { data: audienceData, loading: loadingAudience, error: audienceError } = useApiData(() => 
-    analyticsApi.getAudienceReach(timeRange, selectedDashboard?.id || 1, dashboardFilters)
+    analyticsApi.getAudienceReach(timeRange, currentDashboard?.id || 1, {})
   );
 
   // Fetch monthly mentions data
   const { data: mentionsData, loading: loadingMentions, error: mentionsError } = useApiData(() => 
-    analyticsApi.getMonthlyMentions(timeRange, selectedDashboard?.id || 1, dashboardFilters)
+    analyticsApi.getMonthlyMentions(timeRange, currentDashboard?.id || 1, {})
   );
 
   // Combine data for chart

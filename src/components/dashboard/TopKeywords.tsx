@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { TrendingUp, TrendingDown, Hash } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
 import { useApiData } from '@/hooks/useApiData';
 import { analyticsApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 interface KeywordData {
   keyword: string;
@@ -23,11 +22,11 @@ const defaultKeywordsData: KeywordData[] = [
 ];
 
 const TopKeywords = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
 
   // Fetch top keywords data from Django API
   const { data: apiData, loading, error } = useApiData<KeywordData[]>(() => 
-    analyticsApi.getTopKeywords(selectedDashboard?.id || 1, dashboardFilters)
+    analyticsApi.getTopKeywords(currentDashboard?.id || 1, {})
   );
 
   // Use API data or fallback to default data

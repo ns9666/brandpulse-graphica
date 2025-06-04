@@ -1,33 +1,32 @@
-
 import React from 'react';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, TrendingUp, Users, Zap, Plus, Hash } from 'lucide-react';
 import { useApiData } from '@/hooks/useApiData';
 import { socialListeningApi, Alert, Influencer, ViralContent, TrendingTopic } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 const SocialListeningWidgets = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
 
   // Fetch trending topics
   const { data: trendingTopics, loading: loadingTopics, error: topicsError } = useApiData<TrendingTopic[]>(() => 
-    socialListeningApi.getTrendingTopics(selectedDashboard?.id || 1)
+    socialListeningApi.getTrendingTopics(currentDashboard?.id || 1)
   );
 
   // Fetch alerts
   const { data: alerts, loading: loadingAlerts, error: alertsError } = useApiData<Alert[]>(() => 
-    socialListeningApi.getAlerts(selectedDashboard?.id || 1)
+    socialListeningApi.getAlerts(currentDashboard?.id || 1)
   );
 
   // Fetch influencer tracking
   const { data: influencers, loading: loadingInfluencers, error: influencersError } = useApiData<Influencer[]>(() => 
-    socialListeningApi.getInfluencerTracking(selectedDashboard?.id || 1)
+    socialListeningApi.getInfluencerTracking(currentDashboard?.id || 1)
   );
 
   // Fetch viral content
   const { data: viralContent, loading: loadingViral, error: viralError } = useApiData<ViralContent[]>(() => 
-    socialListeningApi.getViralContent(selectedDashboard?.id || 1)
+    socialListeningApi.getViralContent(currentDashboard?.id || 1)
   );
 
   // Default fallback data

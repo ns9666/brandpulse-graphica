@@ -9,7 +9,6 @@ import { Link } from 'react-router-dom';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardsApi, Dashboard } from '@/services/djangoApi';
 import { toast } from 'sonner';
-import { useDashboard } from '@/contexts/DashboardContext';
 
 // Fallback data for when API is not available
 const fallbackDashboards: Dashboard[] = [
@@ -34,11 +33,93 @@ const fallbackDashboards: Dashboard[] = [
     sentimentAnalysis: true,
     alertThreshold: 50
   },
-  // ... keep existing fallback data (other dashboards)
+  {
+    id: 2,
+    name: 'Campaign Monitoring',
+    description: 'Track the performance of specific marketing campaigns and initiatives',
+    createdAt: '2024-02-01',
+    lastUpdated: '1 day ago',
+    stats: {
+      totalMentions: 8976,
+      avgSentiment: 82,
+      totalReach: 1800000,
+      activePlatforms: 4
+    },
+    thumbnail: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=300&h=200&fit=crop',
+    keywords: ['campaign', 'promotion'],
+    hashtags: ['#campaign', '#marketing'],
+    urls: ['https://campaign.example.com'],
+    platforms: ['twitter', 'facebook', 'linkedin'],
+    refreshInterval: 60,
+    sentimentAnalysis: true,
+    alertThreshold: 60
+  },
+  {
+    id: 3,
+    name: 'Competitor Analysis',
+    description: 'Compare your brand performance against key competitors in the market',
+    createdAt: '2024-02-15',
+    lastUpdated: '3 days ago',
+    stats: {
+      totalMentions: 6543,
+      avgSentiment: 68,
+      totalReach: 1200000,
+      activePlatforms: 5
+    },
+    thumbnail: 'https://images.unsplash.com/photo-1518444065375-3bf4108d3ca4?w=300&h=200&fit=crop',
+    keywords: ['competitor', 'market'],
+    hashtags: ['#competitor', '#market'],
+    urls: ['https://competitor.example.com'],
+    platforms: ['twitter', 'instagram', 'facebook', 'youtube'],
+    refreshInterval: 120,
+    sentimentAnalysis: false,
+    alertThreshold: 70
+  },
+  {
+    id: 4,
+    name: 'Product Feedback',
+    description: 'Gather and analyze customer feedback on specific products and services',
+    createdAt: '2024-03-01',
+    lastUpdated: '5 days ago',
+    stats: {
+      totalMentions: 4321,
+      avgSentiment: 72,
+      totalReach: 900000,
+      activePlatforms: 3
+    },
+    thumbnail: 'https://images.unsplash.com/photo-1560762429-599413aa485c?w=300&h=200&fit=crop',
+    keywords: ['product', 'feedback'],
+    hashtags: ['#product', '#feedback'],
+    urls: ['https://product.example.com'],
+    platforms: ['twitter', 'facebook'],
+    refreshInterval: 30,
+    sentimentAnalysis: true,
+    alertThreshold: 55
+  },
+  {
+    id: 5,
+    name: 'Social Listening',
+    description: 'Monitor social conversations and trends related to your brand and industry',
+    createdAt: '2024-03-15',
+    lastUpdated: '1 week ago',
+    stats: {
+      totalMentions: 2109,
+      avgSentiment: 78,
+      totalReach: 600000,
+      activePlatforms: 6
+    },
+    thumbnail: 'https://images.unsplash.com/photo-1588508065120-2c5d33883441?w=300&h=200&fit=crop',
+    keywords: ['social', 'trends'],
+    hashtags: ['#social', '#trends'],
+    urls: ['https://social.example.com'],
+    platforms: ['twitter', 'instagram', 'facebook', 'youtube', 'linkedin'],
+    refreshInterval: 60,
+    sentimentAnalysis: true,
+    alertThreshold: 65
+  }
 ];
 
 const Dashboards = () => {
-  const { setSelectedDashboard } = useDashboard();
   const navigate = useNavigate();
   const [selectedDashboards, setSelectedDashboards] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
@@ -100,11 +181,11 @@ const Dashboards = () => {
 
   /**
    * Open specific dashboard with proper routing to dashboard view
-   * Uses the dashboard context to set selected dashboard and navigate
+   * Navigate directly to the dashboard overview page
    */
   const handleOpenDashboard = (dashboard: Dashboard) => {
     console.log(`Opening dashboard ${dashboard.id} (${dashboard.name}) - navigating to dashboard view`);
-    setSelectedDashboard(dashboard.id, dashboard.name);
+    navigate(`/dashboard/${dashboard.id}`);
   };
 
   /**

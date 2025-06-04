@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import MotionCard from '@/components/ui/MotionCard';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 // Default fallback data
 const defaultSentimentData = [
@@ -26,11 +25,11 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const SentimentAnalysis = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
 
   // Fetch sentiment analysis data from Django API with dashboard context
   const { data: apiData, loading, error } = useApiData(() => 
-    dashboardApi.getSentimentAnalysis(selectedDashboard?.id || 1, dashboardFilters)
+    dashboardApi.getSentimentAnalysis(currentDashboard?.id || 1, {})
   );
 
   // Convert API data to chart format or use fallback

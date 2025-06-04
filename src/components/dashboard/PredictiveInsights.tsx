@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Brain, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardApi } from '@/services/djangoApi';
-import { useDashboardContext } from '@/pages/Index';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 // Sample data for predictive trends
 const predictiveData = [
@@ -41,12 +41,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const PredictiveInsights = () => {
-  const { selectedDashboard, dashboardFilters } = useDashboardContext();
+  const { currentDashboard } = useDashboard();
   const [showTextAnalysis, setShowTextAnalysis] = useState(false);
 
   // Fetch predictive insights from Django API
   const { data: apiData, loading, error } = useApiData(() => 
-    dashboardApi.getPredictiveInsights(selectedDashboard?.id || 1, dashboardFilters)
+    dashboardApi.getPredictiveInsights(currentDashboard?.id || 1, {})
   );
 
   if (error) {
