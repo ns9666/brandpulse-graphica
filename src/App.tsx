@@ -61,11 +61,44 @@ const AppRoutes = () => {
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
-      <Route path="/dashboard/:dashboardId" element={<ProtectedRoute><DashboardProvider><Index /></DashboardProvider></ProtectedRoute>} />
-      <Route path="/dashboard/:dashboardId/mentions" element={<ProtectedRoute><DashboardProvider><Mentions /></DashboardProvider></ProtectedRoute>} />
-      <Route path="/dashboard/:dashboardId/analytics" element={<ProtectedRoute><DashboardProvider><Analytics /></DashboardProvider></ProtectedRoute>} />
-      <Route path="/dashboard/:dashboardId/competitor-analysis" element={<ProtectedRoute><DashboardProvider><CompetitorAnalysis /></DashboardProvider></ProtectedRoute>} />
-      <Route path="/dashboard/:dashboardId/social-listening" element={<ProtectedRoute><DashboardProvider><SocialListening /></DashboardProvider></ProtectedRoute>} />
+      
+      {/* Dashboard-specific routes wrapped with DashboardProvider */}
+      <Route path="/dashboard/:dashboardId" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <Index />
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/:dashboardId/mentions" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <Mentions />
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/:dashboardId/analytics" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <Analytics />
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/:dashboardId/competitor-analysis" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <CompetitorAnalysis />
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/:dashboardId/social-listening" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <SocialListening />
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/create-dashboard" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
       
       {/* Legacy routes for compatibility */}

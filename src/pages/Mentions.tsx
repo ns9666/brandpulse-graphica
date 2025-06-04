@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/layout/Navbar';
+import DashboardNavbar from '@/components/layout/DashboardNavbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
-import MentionCard from '@/components/mentions/MentionCard';
+import EnhancedMentionCard from '@/components/mentions/EnhancedMentionCard';
 import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 // Use the MentionData interface from the API service
 interface Mention extends MentionData {}
@@ -16,6 +16,8 @@ interface Mention extends MentionData {}
 const ITEMS_PER_PAGE = 5;
 
 const Mentions = () => {
+  const { selectedDashboardId } = useDashboard();
+  
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['All']);
@@ -34,6 +36,12 @@ const Mentions = () => {
 
   // Fetch mentions from Django API with proper typing
   const fetchMentions = async () => {
+    if (!selectedDashboardId) {
+      console.warn('No dashboard selected, cannot fetch mentions');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -47,6 +55,7 @@ const Mentions = () => {
         sentiments: selectedSentiments.includes('All') ? undefined : selectedSentiments.map(s => s.toLowerCase()),
         dateRange: dateRange === 'all' ? undefined : dateRange,
         engagementLevel: engagementFilter === 'all' ? undefined : engagementFilter,
+        dashboardId: selectedDashboardId, // Use the selected dashboard ID
       };
 
       console.log('Fetching mentions with params:', params);
@@ -67,7 +76,7 @@ const Mentions = () => {
     }
   };
 
-  // Fetch mentions when filters change
+  // Fetch mentions when filters change or dashboard changes
   useEffect(() => {
     fetchMentions();
   }, [
@@ -77,7 +86,8 @@ const Mentions = () => {
     dateRange,
     customDateRange,
     engagementFilter,
-    currentPage
+    currentPage,
+    selectedDashboardId // Re-fetch when dashboard changes
   ]);
   
   const handlePlatformFilter = (platform: string) => {
@@ -161,12 +171,12 @@ const Mentions = () => {
   
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Navbar />
+      <DashboardNavbar />
       
       <main className="container pt-28 pb-16">
         <DashboardHeader 
           title="Mentions" 
-          description="Monitor and analyze mentions across all social platforms."
+          description={`Monitor and analyze mentions for ${selectedDashboardId ? 'selected dashboard' : 'all dashboards'}.`}
         />
         
         <div className="flex gap-6">
@@ -308,7 +318,7 @@ const Mentions = () => {
                 {mentions.length > 0 ? (
                   <>
                     {mentions.map((mention) => (
-                      <MentionCard key={mention.id} mention={mention} />
+                      <EnhancedMentionCard key={mention.id} mention={mention} />
                     ))}
                     
                     {/* Pagination */}

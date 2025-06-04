@@ -4,10 +4,11 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, BarChart3, TrendingUp, Users, MessageSquare, Calendar, ExternalLink } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardsApi, Dashboard } from '@/services/djangoApi';
 import { toast } from 'sonner';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 // Fallback data for when API is not available
 const fallbackDashboards: Dashboard[] = [
@@ -36,6 +37,7 @@ const fallbackDashboards: Dashboard[] = [
 ];
 
 const Dashboards = () => {
+  const { setSelectedDashboard } = useDashboard();
   const navigate = useNavigate();
   const [selectedDashboards, setSelectedDashboards] = useState<number[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
@@ -97,11 +99,11 @@ const Dashboards = () => {
 
   /**
    * Open specific dashboard with proper routing to dashboard view
-   * Navigates to /dashboard/:id which shows the main dashboard interface
+   * Uses the dashboard context to set selected dashboard and navigate
    */
-  const handleOpenDashboard = (id: number) => {
-    console.log(`Opening dashboard ${id} - navigating to dashboard view`);
-    navigate(`/dashboard/${id}`);
+  const handleOpenDashboard = (dashboard: Dashboard) => {
+    console.log(`Opening dashboard ${dashboard.id} (${dashboard.name}) - navigating to dashboard view`);
+    setSelectedDashboard(dashboard.id, dashboard.name);
   };
 
   /**
@@ -252,7 +254,7 @@ const Dashboards = () => {
                         className="flex-1 text-xs"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleOpenDashboard(dashboard.id);
+                          handleOpenDashboard(dashboard);
                         }}
                       >
                         <ExternalLink size={12} className="mr-1" />

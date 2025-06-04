@@ -4,41 +4,55 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 interface DashboardContextType {
   selectedDashboardId: number | null;
-  setSelectedDashboardId: (id: number | null) => void;
+  selectedDashboardName: string | null;
+  setSelectedDashboard: (id: number, name: string) => void;
+  clearSelectedDashboard: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextType>({
   selectedDashboardId: null,
-  setSelectedDashboardId: () => {},
+  selectedDashboardName: null,
+  setSelectedDashboard: () => {},
+  clearSelectedDashboard: () => {},
 });
 
 export const DashboardProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedDashboardId, setSelectedDashboardId] = useState<number | null>(null);
+  const [selectedDashboardName, setSelectedDashboardName] = useState<string | null>(null);
   const { dashboardId } = useParams<{ dashboardId: string }>();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Update selected dashboard when URL changes
     if (dashboardId) {
-      setSelectedDashboardId(parseInt(dashboardId));
+      const id = parseInt(dashboardId);
+      setSelectedDashboardId(id);
+      console.log('Dashboard context updated from URL:', id);
     } else {
       setSelectedDashboardId(null);
+      setSelectedDashboardName(null);
     }
   }, [dashboardId]);
 
-  const handleSetSelectedDashboardId = (id: number | null) => {
+  const setSelectedDashboard = (id: number, name: string) => {
+    console.log('Setting selected dashboard:', id, name);
     setSelectedDashboardId(id);
-    if (id) {
-      navigate(`/dashboard/${id}`);
-    } else {
-      navigate('/dashboards');
-    }
+    setSelectedDashboardName(name);
+    navigate(`/dashboard/${id}`);
+  };
+
+  const clearSelectedDashboard = () => {
+    setSelectedDashboardId(null);
+    setSelectedDashboardName(null);
+    navigate('/dashboards');
   };
 
   return (
     <DashboardContext.Provider value={{
       selectedDashboardId,
-      setSelectedDashboardId: handleSetSelectedDashboardId,
+      selectedDashboardName,
+      setSelectedDashboard,
+      clearSelectedDashboard,
     }}>
       {children}
     </DashboardContext.Provider>
