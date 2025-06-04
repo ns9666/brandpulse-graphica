@@ -33,14 +33,13 @@ const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersProps) =
     setTempFilters(filters);
   }, [filters]);
 
-  const platforms = ['twitter', 'instagram', 'facebook', 'linkedin', 'reddit', 'youtube', 'tiktok'];
+  const platforms = ['twitter', 'instagram', 'facebook', 'linkedin', 'reddit', 'youtube'];
   const sentiments = ['positive', 'neutral', 'negative'];
   const dateRanges = [
     { value: '7d', label: 'Last 7 days' },
     { value: '30d', label: 'Last 30 days' },
     { value: '90d', label: 'Last 3 months' },
-    { value: '180d', label: 'Last 6 months' },
-    { value: '1y', label: 'Last year' }
+    { value: '180d', label: 'Last 6 months' }
   ];
 
   // Calculate total applied filters
@@ -50,7 +49,6 @@ const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersProps) =
     if (tempFilters.sentiments.length > 0) count += tempFilters.sentiments.length;
     if (tempFilters.keywords.length > 0) count += tempFilters.keywords.length;
     if (tempFilters.dateRange !== '30d') count += 1; // Default is 30d, so count if different
-    if (tempFilters.minEngagement > 0 || tempFilters.maxEngagement < 10000) count += 1;
     return count;
   };
 
@@ -237,34 +235,6 @@ const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersProps) =
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Engagement Range */}
-          <div className="space-y-3">
-            <Label>Engagement Range</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                value={tempFilters.minEngagement}
-                onChange={(e) => setTempFilters(prev => ({ 
-                  ...prev, 
-                  minEngagement: parseInt(e.target.value) || 0 
-                }))}
-                className="w-20"
-              />
-              <span className="text-muted-foreground">to</span>
-              <Input
-                type="number"
-                placeholder="Max"
-                value={tempFilters.maxEngagement}
-                onChange={(e) => setTempFilters(prev => ({ 
-                  ...prev, 
-                  maxEngagement: parseInt(e.target.value) || 10000 
-                }))}
-                className="w-20"
-              />
-            </div>
           </div>
 
           {/* Apply Button */}

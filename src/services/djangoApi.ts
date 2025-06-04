@@ -745,6 +745,103 @@ export interface CreateDashboardPayload {
   imageUrl?: string;
 }
 
+// Add notifications types
+export interface Notification {
+  id: number;
+  type: 'alert' | 'mention' | 'trend' | 'engagement' | 'system';
+  title: string;
+  message: string;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high';
+  read: boolean;
+  actionRequired?: boolean;
+  dashboardId?: number;
+}
+
+// Notifications APIs - New addition
+export const notificationsApi = {
+  // Get notifications for a dashboard
+  getNotifications: async (dashboardId?: number): Promise<Notification[]> => {
+    const requestBody = { 
+      dashboardId: dashboardId || null,
+      includeRead: true,
+      limit: 50
+    };
+    console.log('Get Notifications API call with dashboardId:', dashboardId, requestBody);
+    try {
+      return await apiCall<Notification[]>('/notifications/list/', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+    } catch (error) {
+      console.warn('Failed to fetch notifications:', error);
+      // Return mock data for now
+      return [
+        {
+          id: 1,
+          type: 'alert',
+          title: 'High Volume Alert',
+          message: 'Brand mentions increased by 150% in the last hour.',
+          timestamp: '2 minutes ago',
+          severity: 'high',
+          read: false,
+          actionRequired: true,
+          dashboardId
+        },
+        {
+          id: 2,
+          type: 'mention',
+          title: 'New Mention on Twitter',
+          message: 'Your brand was mentioned by @influencer_user.',
+          timestamp: '15 minutes ago',
+          severity: 'medium',
+          read: false,
+          dashboardId
+        }
+      ];
+    }
+  },
+
+  // Mark notification as read
+  markAsRead: async (notificationId: number): Promise<void> => {
+    const requestBody = { notificationId, read: true };
+    console.log('Mark Notification as Read API call with:', requestBody);
+    return apiCall<void>('/notifications/mark-read/', {
+      method: 'POST',
+      body: JSON.stringify(requestBody)
+    });
+  },
+
+  // Delete notification
+  deleteNotification: async (notificationId: number): Promise<void> => {
+    const requestBody = { notificationId };
+    console.log('Delete Notification API call with:', requestBody);
+    return apiCall<void>('/notifications/delete/', {
+      method: 'POST',
+      body: JSON.stringify(requestBody)
+    });
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (dashboardId?: number): Promise<void> => {
+    const requestBody = { dashboardId: dashboardId || null };
+    console.log('Mark All Notifications as Read API call with:', requestBody);
+    return apiCall<void>('/notifications/mark-all-read/', {
+      method: 'POST',
+      body: JSON.stringify(requestBody)
+    });
+  },
+
+  // Create new notification (for system/admin use)
+  createNotification: async (notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>): Promise<Notification> => {
+    console.log('Create Notification API call with:', notificationData);
+    return apiCall<Notification>('/notifications/create/', {
+      method: 'POST',
+      body: JSON.stringify(notificationData)
+    });
+  },
+};
+
 export default {
   dashboard: dashboardApi,
   mentions: mentionsApi,
@@ -752,4 +849,5 @@ export default {
   socialListening: socialListeningApi,
   dashboards: dashboardsApi,
   analytics: analyticsApi,
+  notifications: notificationsApi,
 };

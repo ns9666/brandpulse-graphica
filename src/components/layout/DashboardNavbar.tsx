@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, MessageSquare, TrendingUp, Users, Search, ArrowLeft, Bell } from 'lucide-react';
+import { BarChart3, MessageSquare, Search, ArrowLeft, Bell, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useApiData } from '@/hooks/useApiData';
@@ -28,9 +28,8 @@ const DashboardNavbar = () => {
   const dashboardTabs = [
     { path: `/dashboard/${dashboardId}`, label: 'Overview', icon: BarChart3 },
     { path: `/dashboard/${dashboardId}/mentions`, label: 'Mentions', icon: MessageSquare },
-    { path: `/dashboard/${dashboardId}/analytics`, label: 'Analytics', icon: TrendingUp },
-    { path: `/dashboard/${dashboardId}/competitor-analysis`, label: 'Competitors', icon: Users },
     { path: `/dashboard/${dashboardId}/social-listening`, label: 'Social Listening', icon: Search },
+    { path: `/dashboard/${dashboardId}/settings`, label: 'Settings', icon: Settings },
   ];
 
   const handleDashboardSwitch = (newDashboardId: string) => {
@@ -96,9 +95,11 @@ const DashboardNavbar = () => {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Bell size={16} />
-            </Button>
+            <Link to={`/dashboard/${dashboardId}/notifications`}>
+              <Button variant="ghost" size="sm">
+                <Bell size={16} />
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={logout}>
               Logout
             </Button>

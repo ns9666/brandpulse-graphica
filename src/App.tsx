@@ -9,9 +9,9 @@ import { DashboardProvider } from "./contexts/DashboardContext";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Mentions from "./pages/Mentions";
-import Analytics from "./pages/Analytics";
-import CompetitorAnalysis from "./pages/CompetitorAnalysis";
 import SocialListening from "./pages/SocialListening";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 import Dashboards from "./pages/Dashboards";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -70,9 +70,9 @@ const AppRoutes = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/mentions" element={<Mentions />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/competitor-analysis" element={<CompetitorAnalysis />} />
               <Route path="/social-listening" element={<SocialListening />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/notifications" element={<Notifications />} />
             </Routes>
           </DashboardProvider>
         </ProtectedRoute>

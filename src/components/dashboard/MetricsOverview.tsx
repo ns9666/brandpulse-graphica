@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ArrowDown, ArrowUp, BarChart3, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import MotionCard from '@/components/ui/MotionCard';
@@ -5,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useApiData } from '@/hooks/useApiData';
 import { dashboardApi } from '@/services/djangoApi';
 import { useDashboard } from '@/contexts/DashboardContext';
+import { DashboardFiltersData } from '@/components/dashboard/DashboardFilters';
 
 interface MetricCardProps {
   title: string;
@@ -15,6 +17,10 @@ interface MetricCardProps {
   };
   icon: React.ElementType;
   loading?: boolean;
+}
+
+interface MetricsOverviewProps {
+  filters?: DashboardFiltersData;
 }
 
 const MetricCard = ({ title, value, change, icon: Icon, loading }: MetricCardProps) => {
@@ -60,13 +66,13 @@ const MetricCard = ({ title, value, change, icon: Icon, loading }: MetricCardPro
   );
 };
 
-const MetricsOverview = () => {
+const MetricsOverview = ({ filters }: MetricsOverviewProps) => {
   const { currentDashboard } = useDashboard();
 
-  // Fetch dashboard stats from Django API with dashboard context
+  // Fetch dashboard stats from Django API with dashboard context and filters
   const { data: stats, loading, error } = useApiData(() => 
-    dashboardApi.getStats(currentDashboard?.id || 1, {})
-  );
+    dashboardApi.getStats(currentDashboard?.id, filters || {})
+  , [currentDashboard?.id, filters]);
 
   // Fallback data if API fails
   const defaultMetrics = [
