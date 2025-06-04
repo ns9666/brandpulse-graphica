@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -126,6 +127,26 @@ const Mentions = () => {
     }
     setCurrentPage(1);
     console.log(`Applied date filter: ${range}`);
+  };
+
+  const handleAdvancedFiltersChange = (filters: any) => {
+    // Apply the advanced filters to the state
+    if (filters.platforms) {
+      setSelectedPlatforms(filters.platforms.length === 0 ? ['All'] : filters.platforms);
+    }
+    if (filters.sentiments) {
+      setSelectedSentiments(filters.sentiments.length === 0 ? ['All'] : filters.sentiments);
+    }
+    if (filters.dateRange) {
+      setDateRange(filters.dateRange);
+    }
+    if (filters.startDate && filters.endDate) {
+      setCustomDateRange({ 
+        from: new Date(filters.startDate), 
+        to: new Date(filters.endDate) 
+      });
+    }
+    setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(totalMentions / ITEMS_PER_PAGE);
@@ -343,17 +364,10 @@ const Mentions = () => {
           {/* Advanced Filters Modal */}
           {showAdvancedFilters && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="w-full max-w-md">
+              <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg">
                 <AdvancedFilters
-                  isOpen={true}
+                  onFiltersChange={handleAdvancedFiltersChange}
                   onClose={() => setShowAdvancedFilters(false)}
-                  dateRange={customDateRange}
-                  onDateRangeChange={(range) => {
-                    setCustomDateRange(range);
-                    setDateRange('custom');
-                  }}
-                  engagementFilter={engagementFilter}
-                  onEngagementFilterChange={setEngagementFilter}
                 />
               </div>
             </div>
