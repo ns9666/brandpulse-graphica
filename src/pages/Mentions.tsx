@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import DashboardNavbar from '@/components/layout/DashboardNavbar';
@@ -17,16 +16,16 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from '@/components/ui/pagination';
-import { Search, Filter, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, MessageSquare, Heart, Share2, X, SlidersHorizontal } from 'lucide-react';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { useApiData } from '@/hooks/useApiData';
-import { dashboardsApi, mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
+import { mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
 import { useDashboard } from '@/contexts/DashboardContext';
 
 const ITEMS_PER_PAGE = 5;
 
 const Mentions = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
-  const { selectedDashboardId, selectedDashboardName } = useDashboard();
+  const { currentDashboard } = useDashboard();
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,8 +43,8 @@ const Mentions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use the dashboard ID from params or context
-  const currentDashboardId = dashboardId ? parseInt(dashboardId) : selectedDashboardId;
+  // Use the dashboard ID from params
+  const currentDashboardId = dashboardId ? parseInt(dashboardId) : null;
 
   // Fetch mentions from Django API with proper typing
   const fetchMentions = async () => {
@@ -189,7 +188,7 @@ const Mentions = () => {
       <main className="container pt-32 pb-16">
         <DashboardHeader 
           title="Brand Mentions" 
-          description={`Monitor and analyze mentions for ${selectedDashboardName || 'your dashboard'}`}
+          description={`Monitor and analyze mentions for ${currentDashboard?.name || 'your dashboard'}`}
         />
         
         <div className="flex gap-6">

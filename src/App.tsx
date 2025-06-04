@@ -61,45 +61,22 @@ const AppRoutes = () => {
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
-      
-      {/* Dashboard-specific routes wrapped with DashboardProvider */}
-      <Route path="/dashboard/:dashboardId" element={
-        <ProtectedRoute>
-          <DashboardProvider>
-            <Index />
-          </DashboardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/:dashboardId/mentions" element={
-        <ProtectedRoute>
-          <DashboardProvider>
-            <Mentions />
-          </DashboardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/:dashboardId/analytics" element={
-        <ProtectedRoute>
-          <DashboardProvider>
-            <Analytics />
-          </DashboardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/:dashboardId/competitor-analysis" element={
-        <ProtectedRoute>
-          <DashboardProvider>
-            <CompetitorAnalysis />
-          </DashboardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/:dashboardId/social-listening" element={
-        <ProtectedRoute>
-          <DashboardProvider>
-            <SocialListening />
-          </DashboardProvider>
-        </ProtectedRoute>
-      } />
-      
       <Route path="/create-dashboard" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
+      
+      {/* ALL Dashboard-specific routes wrapped with ONE DashboardProvider */}
+      <Route path="/dashboard/:dashboardId/*" element={
+        <ProtectedRoute>
+          <DashboardProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/mentions" element={<Mentions />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/competitor-analysis" element={<CompetitorAnalysis />} />
+              <Route path="/social-listening" element={<SocialListening />} />
+            </Routes>
+          </DashboardProvider>
+        </ProtectedRoute>
+      } />
       
       {/* Legacy routes for compatibility */}
       <Route path="/mentions" element={<Navigate to="/dashboards" replace />} />

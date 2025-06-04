@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, MessageSquare, TrendingUp, Users, Search, ArrowLeft, Bell, ChevronDown } from 'lucide-react';
+import { BarChart3, MessageSquare, TrendingUp, Users, Search, ArrowLeft, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useApiData } from '@/hooks/useApiData';
@@ -13,7 +13,7 @@ const DashboardNavbar = () => {
   const location = useLocation();
   const { logout } = useAuth();
   const { dashboardId } = useParams<{ dashboardId: string }>();
-  const { selectedDashboardId, selectedDashboardName, setSelectedDashboard, clearSelectedDashboard } = useDashboard();
+  const { currentDashboard, switchToDashboard } = useDashboard();
 
   // Fetch all dashboards for the switcher dropdown
   const { data: dashboards } = useApiData<Dashboard[]>(
@@ -34,19 +34,9 @@ const DashboardNavbar = () => {
   ];
 
   const handleDashboardSwitch = (newDashboardId: string) => {
-    const dashboard = dashboards?.find(d => d.id.toString() === newDashboardId);
-    if (dashboard) {
-      // Determine which tab to navigate to based on current location
-      const currentTab = location.pathname.split('/').pop();
-      const validTabs = ['mentions', 'analytics', 'competitor-analysis', 'social-listening'];
-      const targetTab = validTabs.includes(currentTab || '') ? currentTab : '';
-      
-      setSelectedDashboard(dashboard.id, dashboard.name);
-      // The setSelectedDashboard will handle navigation, but we can specify the tab
-      if (targetTab) {
-        // Navigate to the same tab in the new dashboard
-        window.location.href = `/dashboard/${dashboard.id}/${targetTab}`;
-      }
+    const id = parseInt(newDashboardId);
+    if (!isNaN(id)) {
+      switchToDashboard(id);
     }
   };
 
@@ -65,15 +55,16 @@ const DashboardNavbar = () => {
               </span>
             </Link>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearSelectedDashboard}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft size={16} />
-              <span className="hidden md:inline">Back to Dashboards</span>
-            </Button>
+            <Link to="/dashboards">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft size={16} />
+                <span className="hidden md:inline">Back to Dashboards</span>
+              </Button>
+            </Link>
           </div>
 
           {/* Dashboard Switcher and Name */}
@@ -85,7 +76,7 @@ const DashboardNavbar = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-lg">📌</span>
                     <SelectValue placeholder="Select dashboard">
-                      {selectedDashboardName}
+                      {currentDashboard?.name || 'Loading...'}
                     </SelectValue>
                   </div>
                 </SelectTrigger>

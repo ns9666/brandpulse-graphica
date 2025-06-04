@@ -8,7 +8,7 @@ import { useDashboard } from '@/contexts/DashboardContext';
 
 const CompetitorAnalysisPage = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
-  const { selectedDashboardName } = useDashboard();
+  const { currentDashboard } = useDashboard();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -17,7 +17,7 @@ const CompetitorAnalysisPage = () => {
       <main className="container pt-32 pb-16">
         <DashboardHeader 
           title="Competitor Analysis" 
-          description={`Compare your brand performance against competitors for ${selectedDashboardName || 'your dashboard'}`}
+          description={`Compare your brand performance against competitors for ${currentDashboard?.name || 'your dashboard'}`}
         />
 
         <div className="space-y-6">

@@ -12,7 +12,7 @@ import { useDashboard } from '@/contexts/DashboardContext';
 
 const Analytics = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
-  const { selectedDashboardName } = useDashboard();
+  const { currentDashboard } = useDashboard();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -21,7 +21,7 @@ const Analytics = () => {
       <main className="container pt-32 pb-16">
         <DashboardHeader 
           title="Analytics Dashboard" 
-          description={`Deep dive analytics for ${selectedDashboardName || 'your dashboard'}`}
+          description={`Deep dive analytics for ${currentDashboard?.name || 'your dashboard'}`}
         />
 
         <div className="space-y-6">
