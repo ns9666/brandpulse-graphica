@@ -1,19 +1,26 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import DashboardNavbar from '@/components/layout/DashboardNavbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import EnhancedMentionCard from '@/components/mentions/EnhancedMentionCard';
 import AdvancedFilters from '@/components/mentions/AdvancedFilters';
+import MotionCard from '@/components/ui/MotionCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, MessageSquare, Heart, Share2 } from 'lucide-react';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
+import { Search, Filter, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, MessageSquare, Heart, Share2, X, SlidersHorizontal } from 'lucide-react';
 import { useApiData } from '@/hooks/useApiData';
-import { dashboardsApi } from '@/services/djangoApi';
+import { dashboardsApi, mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
 import { useDashboard } from '@/contexts/DashboardContext';
-
-// Use the MentionData interface from the API service
-interface Mention extends MentionData {}
 
 const ITEMS_PER_PAGE = 5;
 
@@ -32,7 +39,7 @@ const Mentions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   
   // Data states with proper typing
-  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [mentions, setMentions] = useState<MentionData[]>([]);
   const [totalMentions, setTotalMentions] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
