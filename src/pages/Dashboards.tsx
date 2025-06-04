@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MotionCard from '@/components/ui/MotionCard';
