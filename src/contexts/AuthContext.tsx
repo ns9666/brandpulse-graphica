@@ -122,6 +122,34 @@ const djangoAuthApi = {
   }
 };
 
+// Helper function to create a mock User object that matches Supabase User type
+const createMockUser = (userData: any): User => {
+  return {
+    id: userData.user_id || userData.id,
+    email: userData.email,
+    phone: userData.phone || '',
+    email_confirmed_at: new Date().toISOString(),
+    phone_confirmed_at: null,
+    confirmation_sent_at: null,
+    recovery_sent_at: null,
+    email_change_sent_at: null,
+    new_email: null,
+    new_phone: null,
+    invited_at: null,
+    action_link: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_anonymous: false,
+    app_metadata: {},
+    user_metadata: { name: userData.name || '' },
+    aud: 'authenticated',
+    role: 'authenticated',
+    last_sign_in_at: new Date().toISOString(),
+    identities: [],
+    factors: []
+  } as User;
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -135,17 +163,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (token) {
         djangoAuthApi.verifyToken(token)
           .then((userData) => {
-            // Mock user object for Django auth
-            const mockUser = {
-              id: userData.user_id,
-              email: userData.email,
-              user_metadata: { name: userData.name }
-            } as User;
+            // Create mock user object for Django auth
+            const mockUser = createMockUser(userData);
             setUser(mockUser);
             // Mock session object
             const mockSession = {
               user: mockUser,
-              access_token: token
+              access_token: token,
+              token_type: 'bearer',
+              expires_in: 3600,
+              expires_at: Math.floor(Date.now() / 1000) + 3600,
+              refresh_token: token
             } as Session;
             setSession(mockSession);
           })
@@ -209,15 +237,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (AUTH_PROVIDER === 'django') {
       try {
         const data = await djangoAuthApi.login(email, password);
-        const mockUser = {
-          id: data.user_id,
-          email: data.email,
-          user_metadata: { name: data.name }
-        } as User;
+        const mockUser = createMockUser(data);
         setUser(mockUser);
         const mockSession = {
           user: mockUser,
-          access_token: data.token
+          access_token: data.token,
+          token_type: 'bearer',
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          refresh_token: data.token
         } as Session;
         setSession(mockSession);
         navigate('/dashboards');

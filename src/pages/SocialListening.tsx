@@ -118,6 +118,49 @@ const SocialListening = () => {
     }
   };
 
+  // Default fallback data with proper typing
+  const defaultTrendingTopics: TrendingTopic[] = [
+    { id: 1, topic: 'AI Technology', mentions: 1247, change: '+15.3%', trend: 'up', sentiment: 78 },
+    { id: 2, topic: 'Customer Service', mentions: 892, change: '+8.7%', trend: 'up', sentiment: 65 },
+    { id: 3, topic: 'Product Launch', mentions: 634, change: '-2.1%', trend: 'down', sentiment: 82 }
+  ];
+
+  const defaultAlerts: Alert[] = [
+    { id: 1, type: 'Mention Spike', message: 'Brand mentions increased by 45% in the last hour', severity: 'high', timestamp: '2 min ago' },
+    { id: 2, type: 'Sentiment Drop', message: 'Negative sentiment detected on Twitter', severity: 'medium', timestamp: '15 min ago' }
+  ];
+
+  const defaultRealTimeMentions = [
+    { time: '00:00', mentions: 45 },
+    { time: '04:00', mentions: 52 },
+    { time: '08:00', mentions: 78 },
+    { time: '12:00', mentions: 95 },
+    { time: '16:00', mentions: 123 },
+    { time: '20:00', mentions: 89 }
+  ];
+
+  const defaultSentimentTrend = [
+    { time: '00:00', sentiment: 72 },
+    { time: '04:00', sentiment: 68 },
+    { time: '08:00', sentiment: 75 },
+    { time: '12:00', sentiment: 82 },
+    { time: '16:00', sentiment: 79 },
+    { time: '20:00', sentiment: 85 }
+  ];
+
+  const defaultKeywords = [
+    { id: 1, keyword: 'brand mention', mentions: 245, alerts: 2, status: 'active' },
+    { id: 2, keyword: 'customer feedback', mentions: 189, alerts: 0, status: 'active' },
+    { id: 3, keyword: 'product review', mentions: 167, alerts: 1, status: 'paused' }
+  ];
+
+  // Use API data or fallback with proper type checking
+  const topicsData = Array.isArray(trendingTopics) ? trendingTopics : defaultTrendingTopics;
+  const alertsData = Array.isArray(alerts) ? alerts : defaultAlerts;
+  const realTimeMentionsData = Array.isArray(realTimeMentions) ? realTimeMentions : defaultRealTimeMentions;
+  const sentimentTrendData = Array.isArray(sentimentTrend) ? sentimentTrend : defaultSentimentTrend;
+  const keywordsData = Array.isArray(keywords) ? keywords : defaultKeywords;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Navbar />
@@ -184,7 +227,7 @@ const SocialListening = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {alerts && alerts.length > 0 ? alerts.map((alert) => (
+                {alertsData.length > 0 ? alertsData.map((alert) => (
                   <div key={alert.id} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
                     <div className={`w-3 h-3 rounded-full mt-1 ${getSeverityColor(alert.severity)}`} />
                     <div className="flex-1">
@@ -217,7 +260,7 @@ const SocialListening = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {trendingTopics && trendingTopics.length > 0 ? trendingTopics.map((topic) => (
+                {topicsData.length > 0 ? topicsData.map((topic) => (
                   <div key={topic.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">{topic.topic}</h4>
@@ -258,7 +301,7 @@ const SocialListening = () => {
                 <div className="animate-pulse h-full bg-gray-200 rounded"></div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={realTimeMentions || []}>
+                  <LineChart data={realTimeMentionsData}>
                     <XAxis dataKey="time" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
@@ -303,7 +346,7 @@ const SocialListening = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {keywords && keywords.length > 0 ? keywords.map((keyword: any) => (
+                  {keywordsData.length > 0 ? keywordsData.map((keyword: any) => (
                     <tr key={keyword.id} className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-3 px-4 font-medium">{keyword.keyword}</td>
                       <td className="text-center py-3 px-4">{keyword.mentions?.toLocaleString() || 0}</td>
@@ -351,7 +394,7 @@ const SocialListening = () => {
               <div className="animate-pulse h-full bg-gray-200 rounded"></div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sentimentTrend || []}>
+                <BarChart data={sentimentTrendData}>
                   <XAxis dataKey="time" tick={{ fontSize: 12 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                   <Tooltip />
