@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { DashboardProvider } from "./contexts/DashboardContext";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Mentions from "./pages/Mentions";
@@ -59,13 +60,19 @@ const AppRoutes = () => {
       </Route>
       
       {/* Protected routes - require authentication */}
-      <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/dashboards" element={<ProtectedRoute><Dashboards /></ProtectedRoute>} />
-      <Route path="/mentions" element={<ProtectedRoute><Mentions /></ProtectedRoute>} />
-      <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-      <Route path="/competitor-analysis" element={<ProtectedRoute><CompetitorAnalysis /></ProtectedRoute>} />
-      <Route path="/social-listening" element={<ProtectedRoute><SocialListening /></ProtectedRoute>} />
+      <Route path="/dashboard/:dashboardId" element={<ProtectedRoute><DashboardProvider><Index /></DashboardProvider></ProtectedRoute>} />
+      <Route path="/dashboard/:dashboardId/mentions" element={<ProtectedRoute><DashboardProvider><Mentions /></DashboardProvider></ProtectedRoute>} />
+      <Route path="/dashboard/:dashboardId/analytics" element={<ProtectedRoute><DashboardProvider><Analytics /></DashboardProvider></ProtectedRoute>} />
+      <Route path="/dashboard/:dashboardId/competitor-analysis" element={<ProtectedRoute><DashboardProvider><CompetitorAnalysis /></DashboardProvider></ProtectedRoute>} />
+      <Route path="/dashboard/:dashboardId/social-listening" element={<ProtectedRoute><DashboardProvider><SocialListening /></DashboardProvider></ProtectedRoute>} />
       <Route path="/create-dashboard" element={<ProtectedRoute><CreateDashboard /></ProtectedRoute>} />
+      
+      {/* Legacy routes for compatibility */}
+      <Route path="/mentions" element={<Navigate to="/dashboards" replace />} />
+      <Route path="/analytics" element={<Navigate to="/dashboards" replace />} />
+      <Route path="/competitor-analysis" element={<Navigate to="/dashboards" replace />} />
+      <Route path="/social-listening" element={<Navigate to="/dashboards" replace />} />
       
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />

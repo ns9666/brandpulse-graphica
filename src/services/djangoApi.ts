@@ -1,5 +1,52 @@
 const API_BASE_URL = 'http://localhost:8000/api'; // Django backend URL
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('auth_token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : '',
+  };
+};
+
+// Generic API call function with error handling and auth
+const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  try {
+    const headers = getAuthHeaders();
+    console.log(`Making API call to: ${API_BASE_URL}${endpoint}`);
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
+
+    // Handle authentication errors
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+      throw new Error('Authentication required');
+    }
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data && typeof data === 'object' && 'data' in data) {
+      return data.data as T;
+    }
+    
+    return data as T;
+  } catch (error) {
+    console.error(`API Error for ${endpoint}:`, error);
+    throw error;
+  }
+};
+
 // Types for API responses
 export interface DashboardStats {
   totalMentions: number;
@@ -109,49 +156,6 @@ export interface ViralContent {
   timestamp: string;
 }
 
-// Helper function to get auth headers
-const getAuthHeaders = async () => {
-  // Get current user session from Supabase for authentication
-  const token = localStorage.getItem('supabase.auth.token');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
-  };
-};
-
-// Generic API call function with error handling
-const apiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
-  try {
-    const headers = await getAuthHeaders();
-    console.log(`Making API call to: ${API_BASE_URL}${endpoint}`);
-    console.log('Request body:', options.body);
-    
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API call failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
-    // For analytics endpoints, extract the data array if it exists
-    if (data && typeof data === 'object' && 'data' in data) {
-      return data.data as T;
-    }
-    
-    return data as T;
-  } catch (error) {
-    console.error(`API Error for ${endpoint}:`, error);
-    throw error;
-  }
-};
-
 // Dashboard APIs - All converted to POST for security
 export const dashboardApi = {
   // Get main dashboard statistics
@@ -253,6 +257,8 @@ export const mentionsApi = {
     platforms?: string[];
     sentiments?: string[];
     dateRange?: string;
+    startDate?: string;
+    endDate?: string;
     engagementLevel?: string;
     dashboardId?: number;
   }): Promise<PaginatedResponse<MentionData>> => {
@@ -264,6 +270,8 @@ export const mentionsApi = {
       platforms: params.platforms || [],
       sentiments: params.sentiments || [],
       dateRange: params.dateRange || '30d',
+      startDate: params.startDate,
+      endDate: params.endDate,
       engagementLevel: params.engagementLevel || 'all',
       dashboardId: effectiveDashboardId
     };

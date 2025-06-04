@@ -1,12 +1,17 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -19,12 +24,8 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
-// Auth config flag - set to 'django' for Django auth, 'supabase' for Supabase auth
-const AUTH_PROVIDER = 'django'; // Change this to switch between providers
-
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   loading: true,
   isAuthenticated: false,
   isLoading: true,
@@ -54,7 +55,10 @@ const djangoAuthApi = {
     }
 
     const data = await response.json();
+    
+    // Store token in localStorage (consider httpOnly cookies for production)
     localStorage.setItem('auth_token', data.token);
+    
     return data;
   },
 
@@ -122,168 +126,61 @@ const djangoAuthApi = {
   }
 };
 
-// Helper function to create a mock User object that matches Supabase User type
-const createMockUser = (userData: any): User => {
-  return {
-    id: userData.user_id || userData.id,
-    email: userData.email,
-    phone: userData.phone || '',
-    email_confirmed_at: new Date().toISOString(),
-    phone_confirmed_at: null,
-    confirmation_sent_at: null,
-    recovery_sent_at: null,
-    email_change_sent_at: null,
-    new_email: null,
-    new_phone: null,
-    invited_at: null,
-    action_link: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    is_anonymous: false,
-    app_metadata: {},
-    user_metadata: { name: userData.name || '' },
-    aud: 'authenticated',
-    role: 'authenticated',
-    last_sign_in_at: new Date().toISOString(),
-    identities: [],
-    factors: []
-  } as User;
-};
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (AUTH_PROVIDER === 'django') {
-      // Django auth initialization
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        djangoAuthApi.verifyToken(token)
-          .then((userData) => {
-            // Create mock user object for Django auth
-            const mockUser = createMockUser(userData);
-            setUser(mockUser);
-            // Mock session object
-            const mockSession = {
-              user: mockUser,
-              access_token: token,
-              token_type: 'bearer',
-              expires_in: 3600,
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
-              refresh_token: token
-            } as Session;
-            setSession(mockSession);
-          })
-          .catch(() => {
-            localStorage.removeItem('auth_token');
-            setUser(null);
-            setSession(null);
-          })
-          .finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+    // Check for existing token on app startup
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      djangoAuthApi.verifyToken(token)
+        .then((userData) => {
+          setUser(userData);
+        })
+        .catch(() => {
+          localStorage.removeItem('auth_token');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
     } else {
-      // Supabase auth initialization (fallback)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email);
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-
-          if (event === 'SIGNED_IN' && session?.user) {
-            console.log('User signed in, redirecting to dashboards');
-            navigate('/dashboards');
-          }
-        }
-      );
-
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
-
-      return () => subscription.unsubscribe();
+      setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
-    if (AUTH_PROVIDER === 'django') {
-      try {
-        await djangoAuthApi.register('', email, password);
-        return { error: null };
-      } catch (error) {
-        return { error: error instanceof Error ? error.message : 'Registration failed' };
-      }
-    } else {
-      const redirectUrl = `${window.location.origin}/dashboards`;
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-      return { error };
+    try {
+      await djangoAuthApi.register('', email, password);
+      return { error: null };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Registration failed' };
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    if (AUTH_PROVIDER === 'django') {
-      try {
-        const data = await djangoAuthApi.login(email, password);
-        const mockUser = createMockUser(data);
-        setUser(mockUser);
-        const mockSession = {
-          user: mockUser,
-          access_token: data.token,
-          token_type: 'bearer',
-          expires_in: 3600,
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-          refresh_token: data.token
-        } as Session;
-        setSession(mockSession);
-        navigate('/dashboards');
-        return { error: null };
-      } catch (error) {
-        return { error: error instanceof Error ? error.message : 'Login failed' };
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error };
+    try {
+      const data = await djangoAuthApi.login(email, password);
+      setUser(data.user);
+      navigate('/dashboards');
+      return { error: null };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Login failed' };
     }
   };
 
   const signOut = async () => {
-    if (AUTH_PROVIDER === 'django') {
-      await djangoAuthApi.logout();
-      setUser(null);
-      setSession(null);
-    } else {
-      await supabase.auth.signOut();
-    }
+    await djangoAuthApi.logout();
+    setUser(null);
     navigate('/login');
   };
 
   const resetPassword = async (email: string) => {
-    if (AUTH_PROVIDER === 'django') {
-      try {
-        await djangoAuthApi.resetPassword(email);
-        return { error: null };
-      } catch (error) {
-        return { error: error instanceof Error ? error.message : 'Password reset failed' };
-      }
-    } else {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      return { error };
+    try {
+      await djangoAuthApi.resetPassword(email);
+      return { error: null };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Password reset failed' };
     }
   };
 
@@ -298,24 +195,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    if (AUTH_PROVIDER === 'django') {
-      try {
-        await djangoAuthApi.register(name, email, password);
-        return true;
-      } catch (error) {
-        return false;
-      }
-    } else {
-      const { error } = await signUp(email, password);
-      return !error;
+    try {
+      await djangoAuthApi.register(name, email, password);
+      return true;
+    } catch (error) {
+      return false;
     }
   };
 
   const value = {
     user,
-    session,
     loading,
-    isAuthenticated: !!session,
+    isAuthenticated: !!user,
     isLoading: loading,
     signUp,
     signIn,

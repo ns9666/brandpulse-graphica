@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -97,15 +96,12 @@ const Dashboards = () => {
   };
 
   /**
-   * Open specific dashboard with proper parameter passing
-   * Navigates to main dashboard view with dashboard ID as query parameter
-   * The Index page will receive this parameter and load specific dashboard data
+   * Open specific dashboard with proper routing to dashboard view
+   * Navigates to /dashboard/:id which shows the main dashboard interface
    */
   const handleOpenDashboard = (id: number) => {
-    console.log(`Opening dashboard ${id} with query parameter`);
-    // Navigate to main dashboard with specific dashboard ID as query param
-    // This will be picked up by Index.tsx to load specific dashboard data
-    navigate(`/?dashboard=${id}`);
+    console.log(`Opening dashboard ${id} - navigating to dashboard view`);
+    navigate(`/dashboard/${id}`);
   };
 
   /**
