@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, createContext, useContext } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/layout/Navbar';
+import { useParams } from 'react-router-dom';
+import DashboardNavbar from '@/components/layout/DashboardNavbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import MetricsOverview from '@/components/dashboard/MetricsOverview';
 import MentionsChart from '@/components/dashboard/MentionsChart';
@@ -13,6 +13,7 @@ import SourceDistribution from '@/components/dashboard/SourceDistribution';
 import TopKeywords from '@/components/dashboard/TopKeywords';
 import { DashboardFiltersData } from '@/components/dashboard/DashboardFilters';
 import { dashboardsApi, Dashboard } from '@/services/djangoApi';
+import { useDashboard } from '@/contexts/DashboardContext';
 
 // Dashboard Context for sharing dashboard state across components
 interface DashboardContextType {
@@ -37,9 +38,8 @@ const DashboardContext = createContext<DashboardContextType>({
 export const useDashboardContext = () => useContext(DashboardContext);
 
 const Index = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const dashboardId = searchParams.get('dashboard');
+  const { dashboardId } = useParams<{ dashboardId: string }>();
+  const { selectedDashboardId, selectedDashboardName } = useDashboard();
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [dashboardFilters, setDashboardFilters] = useState<DashboardFiltersData>({
@@ -51,34 +51,12 @@ const Index = () => {
     maxEngagement: 10000,
   });
 
-  // Load default dashboard if no dashboard ID is provided
-  useEffect(() => {
-    if (!dashboardId) {
-      loadDefaultDashboard();
-    }
-  }, []);
-
   // Load specific dashboard when dashboard ID changes
   useEffect(() => {
     if (dashboardId) {
       loadSpecificDashboard(parseInt(dashboardId));
-    } else {
-      setSelectedDashboard(null);
     }
   }, [dashboardId]);
-
-  const loadDefaultDashboard = async () => {
-    try {
-      console.log('Loading default dashboard...');
-      const dashboards = await dashboardsApi.getDashboards();
-      if (dashboards.length > 0) {
-        const defaultDashboard = dashboards[0];
-        setSearchParams({ dashboard: defaultDashboard.id.toString() });
-      }
-    } catch (error) {
-      console.error('Failed to load default dashboard:', error);
-    }
-  };
 
   const loadSpecificDashboard = async (id: number) => {
     try {
@@ -128,11 +106,11 @@ const Index = () => {
   return (
     <DashboardContext.Provider value={contextValue}>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Navbar />
+        <DashboardNavbar />
         
-        <main className="container pt-28 pb-16">
+        <main className="container pt-32 pb-16">
           <DashboardHeader 
-            title={selectedDashboard ? selectedDashboard.name : "Social Media Dashboard"} 
+            title={selectedDashboard ? selectedDashboard.name : "Dashboard Overview"} 
             description={selectedDashboard ? selectedDashboard.description : "Monitor your brand across all platforms"}
             onFiltersChange={handleFiltersChange}
             currentFilters={dashboardFilters}

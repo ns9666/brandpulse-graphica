@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import DashboardNavbar from '@/components/layout/DashboardNavbar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import MotionCard from '@/components/ui/MotionCard';
 import EnhancedMentionCard from '@/components/mentions/EnhancedMentionCard';
 import AdvancedFilters from '@/components/mentions/AdvancedFilters';
 import { Button } from '@/components/ui/button';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Search, X, SlidersHorizontal } from 'lucide-react';
-import { mentionsApi, MentionData, PaginatedResponse } from '@/services/djangoApi';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, MessageSquare, Heart, Share2 } from 'lucide-react';
+import { useApiData } from '@/hooks/useApiData';
+import { dashboardsApi } from '@/services/djangoApi';
 import { useDashboard } from '@/contexts/DashboardContext';
 
 // Use the MentionData interface from the API service
@@ -16,7 +18,8 @@ interface Mention extends MentionData {}
 const ITEMS_PER_PAGE = 5;
 
 const Mentions = () => {
-  const { selectedDashboardId } = useDashboard();
+  const { dashboardId } = useParams<{ dashboardId: string }>();
+  const { selectedDashboardId, selectedDashboardName } = useDashboard();
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,9 +37,12 @@ const Mentions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use the dashboard ID from params or context
+  const currentDashboardId = dashboardId ? parseInt(dashboardId) : selectedDashboardId;
+
   // Fetch mentions from Django API with proper typing
   const fetchMentions = async () => {
-    if (!selectedDashboardId) {
+    if (!currentDashboardId) {
       console.warn('No dashboard selected, cannot fetch mentions');
       setLoading(false);
       return;
@@ -55,7 +61,7 @@ const Mentions = () => {
         sentiments: selectedSentiments.includes('All') ? undefined : selectedSentiments.map(s => s.toLowerCase()),
         dateRange: dateRange === 'all' ? undefined : dateRange,
         engagementLevel: engagementFilter === 'all' ? undefined : engagementFilter,
-        dashboardId: selectedDashboardId, // Use the selected dashboard ID
+        dashboardId: currentDashboardId, // Use the selected dashboard ID
       };
 
       console.log('Fetching mentions with params:', params);
@@ -87,7 +93,7 @@ const Mentions = () => {
     customDateRange,
     engagementFilter,
     currentPage,
-    selectedDashboardId // Re-fetch when dashboard changes
+    currentDashboardId // Re-fetch when dashboard changes
   ]);
   
   const handlePlatformFilter = (platform: string) => {
@@ -173,10 +179,10 @@ const Mentions = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <DashboardNavbar />
       
-      <main className="container pt-28 pb-16">
+      <main className="container pt-32 pb-16">
         <DashboardHeader 
-          title="Mentions" 
-          description={`Monitor and analyze mentions for ${selectedDashboardId ? 'selected dashboard' : 'all dashboards'}.`}
+          title="Brand Mentions" 
+          description={`Monitor and analyze mentions for ${selectedDashboardName || 'your dashboard'}`}
         />
         
         <div className="flex gap-6">
